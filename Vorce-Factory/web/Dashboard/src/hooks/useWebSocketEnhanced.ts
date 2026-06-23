@@ -96,15 +96,6 @@ export function useWebSocketEnhanced({
     });
   }, []);
 
-  // Remove file from unread updates
-  const markAsRead = useCallback((filePath: string) => {
-    setUnreadUpdates(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(filePath);
-      return newSet;
-    });
-  }, []);
-
   // Has unread updates
   const hasUnreadUpdates = useMemo(() => unreadUpdates.size > 0, [unreadUpdates.size]);
 
@@ -169,57 +160,64 @@ export function useWebSocketEnhanced({
           const message: WebSocketMessage = JSON.parse(event.data);
 
           // Handle different message types
-          switch (message.type) {
-            case 'file-update':
-              const fileUpdate = message as FileUpdate;
-              setData(prev => {
-                if (!prev) return prev;
+          if ('type' in message) {
+            switch (message.type) {
+              case 'file-update': {
+                const fileUpdate = message;
+                setData(prev => {
+                  if (!prev) return prev;
 
-                // Update only the affected fragment
-                const updatedRunStates = prev.runStates.map(runState => {
-                  if (fileUpdate.path.startsWith(runState.name)) {
-                    return {
-                      ...runState,
-                      data: {
-                        ...runState.data,
-                        lastUpdated: fileUpdate.timestamp,
-                        [fileUpdate.data.fullPath]: fileUpdate.data
-                      }
-                    };
-                  }
-                  return runState;
+                  // Update only the affected fragment
+                  const updatedRunStates = prev.runStates.map(runState => {
+                    if (fileUpdate.path.startsWith(runState.name)) {
+                      return {
+                        ...runState,
+                        data: {
+                          ...runState.data,
+                          lastUpdated: fileUpdate.timestamp,
+                          [fileUpdate.data.fullPath]: fileUpdate.data
+                        }
+                      };
+                    }
+                    return runState;
+                  });
+
+                  return {
+                    ...prev,
+                    timestamp: fileUpdate.timestamp,
+                    runStates: updatedRunStates
+                  };
                 });
 
-                return {
-                  ...prev,
-                  timestamp: fileUpdate.timestamp,
-                  runStates: updatedRunStates
-                };
-              });
+                setLastSync(fileUpdate.timestamp);
+                onFileUpdate?.(fileUpdate);
+                markAsUnread(fileUpdate.path);
+                break;
+              }
 
-              setLastSync(fileUpdate.timestamp);
-              onFileUpdate?.(fileUpdate);
-              markAsUnread(fileUpdate.path);
-              break;
+              case 'log-update': {
+                const logUpdate = message;
+                setLastSync(logUpdate.timestamp);
+                onLogUpdate?.(logUpdate);
+                break;
+              }
 
-            case 'log-update':
-              const logUpdate = message as LogUpdate;
-              setLastSync(logUpdate.timestamp);
-              onLogUpdate?.(logUpdate);
-              break;
+              case 'connection-established': {
+                const connUpdate = message;
+                setLastSync(connUpdate.timestamp);
+                onConnectionEstablished?.();
+                break;
+              }
 
-            case 'connection-established':
-              const connUpdate = message as ConnectionUpdate;
-              setLastSync(connUpdate.timestamp);
-              onConnectionEstablished?.();
-              break;
-
-            default:
-              // Handle original sync data format
-              const syncData = message as SyncData;
-              setData(syncData);
-              setLastSync(syncData.timestamp);
-              onMessage?.(syncData);
+              default:
+                break;
+            }
+          } else {
+            // Handle original sync data format
+            const syncData = message;
+            setData(syncData);
+            setLastSync(syncData.timestamp);
+            onMessage?.(syncData);
           }
         } catch (error) {
           console.error('Failed to parse WebSocket message:', error);
@@ -336,7 +334,7 @@ export function useWebSocket(options?: UseWebSocketOptions) {
   return useWebSocketEnhanced(options);
 }
 
-export function useAutoRefresh(jsonPath?: string, _intervalMs?: number) {
+export function useAutoRefresh(_jsonPath?: string, _intervalMs?: number) {
   const { data, status } = useWebSocketEnhanced({
     url: 'ws://localhost:5174'
   });

@@ -57,7 +57,7 @@ function Initialize-RunState {
     )
 
     $state = New-VorceRunStateObject -RunName $RunName -RunType $RunType -MainRunId $MainRunId -ParentRunId $ParentRunId -InputFingerprint $InputFingerprint
-    Save-VorceRunState -State $state
+    Save-VorceRunState -State $state | Out-Null
     return $state
 }
 

@@ -58,6 +58,7 @@ Thumbs.db
 !resources/controllers/**/*.json
 
 *.json
+!Vorce-Factory/web/Dashboard/tsconfig.json
 
 # Allow vcpkg files
 !vcpkg.json
@@ -106,6 +107,5 @@ test.py
 # Vendor crates (should be managed by workspace)
 # crates/vendor/env_logger/
 # crates/vendor/rusty-spout/
-
 
 

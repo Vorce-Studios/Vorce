@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { LayoutDashboard, Activity, Settings, RefreshCw, Zap, BarChart3, Menu } from 'lucide-react';
+import { LayoutDashboard, Activity, Settings, Zap, BarChart3, Menu } from 'lucide-react';
 import { useData, useAutoRefresh } from './hooks';
 import { useWebSocketEnhanced } from './hooks/useWebSocketEnhanced';
 import { SyncStatus } from './components/SyncStatus';
@@ -69,18 +69,17 @@ const defaultActiveSessions: ActiveSessions = {
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [hierarchyViewExpanded, setHierarchyViewExpanded] = useState<Set<string>>(new Set());
 
   // Fetch data hooks
-  const { data: config, loading: configLoading, refetch: refetchConfig } = useData<AutopilotConfig>('/autopilot-config.json', defaultAutopilotConfig);
-  const { data: registry, loading: registryLoading, refetch: refetchRegistry } = useData<QuotaRegistry>('/registry.json', defaultQuotaRegistry);
-  const { data: sessions, loading: sessionsLoading, refetch: refetchSessions } = useData<ActiveSessions>('/active-sessions.json', defaultActiveSessions);
-  const { data: issues, loading: issuesLoading, refetch: refetchIssues } = useData<GitHubIssue[]>('/github-issues.json', []);
-  const { data: pullRequests, loading: prLoading, refetch: refetchPRs } = useData<PullRequest[]>('/pull-requests.json', []);
+  const { data: config, refetch: refetchConfig } = useData<AutopilotConfig>('/autopilot-config.json', defaultAutopilotConfig);
+  const { data: registry, refetch: refetchRegistry } = useData<QuotaRegistry>('/registry.json', defaultQuotaRegistry);
+  const { data: sessions, refetch: refetchSessions } = useData<ActiveSessions>('/active-sessions.json', defaultActiveSessions);
+  const { data: issues, refetch: refetchIssues } = useData<GitHubIssue[]>('/github-issues.json', []);
+  const { data: pullRequests, refetch: refetchPRs } = useData<PullRequest[]>('/pull-requests.json', []);
   const { data: projectItems, refetch: refetchProjectItems } = useData<any>('/project-items.json', { items: [] });
   const { data: julesSessions, refetch: refetchJulesSessions } = useData<any[]>('/jules-sessions.json', []);
   const { data: memoryStore, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
-  const { data: history, loading: historyLoading, refetch: refetchHistory } = useData<any[]>('/data.json', []);
+  const { data: history, refetch: refetchHistory } = useData<any[]>('/data.json', []);
   const { data: auditResult, refetch: refetchAuditResult } = useData<any>('/audit-result.json', null);
   const { data: runSummary, refetch: refetchRunSummary } = useData<RunSummary>('/run-summary.json', { generated_at: '', recent_runs: [], stats_24h: {}, stats_7d: {} });
   const { data: runHierarchy, refetch: refetchHierarchy } = useData<any>('/run-hierarchy.json', null);
@@ -101,14 +100,7 @@ export default function App() {
   }, [refetchConfig, refetchRegistry, refetchSessions, refetchIssues, refetchPRs, refetchProjectItems, refetchJulesSessions, refetchMemory, refetchHistory, refetchAuditResult, refetchRunSummary, refetchHierarchy]);
 
   // Enhanced WebSocket for real-time updates
-  const {
-    data: wsData,
-    lastSync,
-    connectionStatus,
-    hasUnreadUpdates,
-    unreadUpdatesCount,
-    reconnect
-  } = useWebSocketEnhanced({
+  useWebSocketEnhanced({
     onFileUpdate: (update) => {
       // Handle file updates by refreshing specific data
       if (update.path.includes('run-states')) {
@@ -127,21 +119,6 @@ export default function App() {
 
   // Legacy polling fallback
   useAutoRefresh(refetchAll, 30000);
-
-  // Handle hierarchy view toggle
-  const toggleHierarchyNode = useCallback((nodeId: string) => {
-    setHierarchyViewExpanded(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(nodeId)) {
-        newSet.delete(nodeId);
-      } else {
-        newSet.add(nodeId);
-      }
-      return newSet;
-    });
-  }, []);
-
-  const isGlobalLoading = configLoading && registryLoading && sessionsLoading && issuesLoading && prLoading && historyLoading;
 
   const renderActivePage = () => {
       switch (activeTab) {

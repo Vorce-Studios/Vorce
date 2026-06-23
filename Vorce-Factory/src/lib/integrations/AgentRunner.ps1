@@ -94,7 +94,7 @@ function Get-VorceProviderChain {
             $modelTier = $Matches[2]
         }
         $providerId = Resolve-VorceProviderId -ProviderName $candidate
-        $token = if ($modelTier) { "$providerId:$modelTier" } else { $providerId }
+        $token = if ($modelTier) { '{0}:{1}' -f $providerId, $modelTier } else { $providerId }
         if (-not $normalized.Contains($token)) {
             $normalized.Add($token)
         }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, CalendarClock, Ban, MessageSquare, Terminal, Play, CheckCircle, Trash2 } from 'lucide-react';
+import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, CalendarClock, Ban, MessageSquare, Play, CheckCircle, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue, AuditResult } from '../types';
 import DeliberationPanel from './DeliberationPanel';
@@ -880,46 +880,6 @@ function RunCard({ title, status, lastAt, nextAt, nextInSeconds, interval, cance
           <Ban className="w-3.5 h-3.5" />
           {cancelled ? 'Aktivieren' : 'Cancel'}
         </button>
-      </div>
-    </div>
-  );
-}
-
-function LiveLogPanel({ items }: { items: Array<{ time: string; message: string; level: string }> }) {
-  const hasProblems = items.some(item => item.level === 'error' || item.level === 'warn');
-  return (
-    <div className={`glass-card p-5 border ${hasProblems ? 'border-amber-500/25' : 'border-slate-800'}`}>
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-          <Terminal className="w-4 h-4 text-emerald-400" />
-          Live-Log
-        </h3>
-        <span className={`text-[11px] px-2 py-1 rounded border ${
-          hasProblems ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-        }`}>
-          {hasProblems ? 'Hinweise' : 'OK'}
-        </span>
-      </div>
-      <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
-        {items.length === 0 ? (
-          <div className="text-xs text-slate-500 rounded border border-slate-800 bg-slate-950/40 px-3 py-2">
-            Noch keine Live-Logs vorhanden.
-          </div>
-        ) : (
-          items.map((item, idx) => {
-            const levelClass =
-              item.level === 'error' ? 'bg-rose-500/10 text-rose-200 border-rose-500/25' :
-              item.level === 'warn' ? 'bg-amber-500/10 text-amber-200 border-amber-500/25' :
-              item.level === 'ok' ? 'bg-emerald-500/10 text-emerald-200 border-emerald-500/20' :
-              'bg-slate-950/45 text-slate-300 border-slate-800';
-            return (
-              <div key={`${item.time}-${idx}`} className={`grid grid-cols-[4.5rem_1fr] gap-2 rounded border px-3 py-2 text-xs ${levelClass}`}>
-                <span className="font-mono text-[11px] opacity-70">{item.time || '--:--:--'}</span>
-                <span className="truncate" title={item.message}>{item.message}</span>
-              </div>
-            );
-          })
-        )}
       </div>
     </div>
   );

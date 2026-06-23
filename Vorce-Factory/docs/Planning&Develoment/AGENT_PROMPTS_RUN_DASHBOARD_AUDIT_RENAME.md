@@ -1936,3 +1936,1697 @@ Abschlussregel:
 
 - Ein Prompt gilt erst als abgeschlossen, wenn Code, fokussierte Tests, bestehende Regressionstests und der jeweilige Datenvertrag gemeinsam bestanden sind.
 - Reine Auditberichte oder ein erfolgreicher Vite-Build ohne Typecheck reichen nicht als Abschlussnachweis.
+
+
+## Verbindliche Nacharbeiten aus dem Implementierungs-Audit vom 2026-06-22
+
+Dieser Abschnitt beginnt bewusst ab Zeile 1941 und ist die verbindliche Arbeitsgrundlage fuer alle im Audit festgestellten Restarbeiten.
+
+### Statuslegende fuer die Nacharbeiten
+
+- `[OFFEN]`: Noch nicht begonnen oder zentrale Funktion fehlt.
+- `[IN ARBEIT]`: Implementierung wurde begonnen, aber Tests oder Abnahmekriterien fehlen.
+- `[BLOCKIERT]`: Eine konkret dokumentierte externe oder technische Abhaengigkeit verhindert die Fortsetzung.
+- `[ERLEDIGT]`: Code, fokussierte Tests, Regressionstests und Datenvertrag sind nachweislich erfolgreich.
+
+### Verbindliches Arbeits- und Statusprotokoll
+
+Jeder Agent muss fuer seinen Auftrag diese Regeln einhalten:
+
+1. Vor der ersten Codeaenderung den zugehoerigen Status in diesem Abschnitt von `[OFFEN]` auf `[IN ARBEIT]` setzen.
+2. Nach jeder abgeschlossenen Teilaufgabe die Checkbox direkt in diesem Dokument aktualisieren.
+3. `[ERLEDIGT]` darf erst gesetzt werden, wenn alle Teilaufgaben und alle Akzeptanzkriterien bestanden sind.
+4. Fehlgeschlagene Tests duerfen nicht durch weichere Assertions, pauschale `try/catch`-Bloecke oder fehlende ExitCodes versteckt werden.
+5. Jeder Test muss bei mindestens einem fehlgeschlagenen Pflichtcheck mit ExitCode `1` enden.
+6. Runtime-Dateien unter `var/run-states`, `var/run-history`, `var/db` und `var/log` nicht als Ersatz fuer Tests manuell faelschen.
+7. Bestehende Legacy-Dateien nicht loeschen, solange keine explizite Migrations- oder Retention-Regel dies erlaubt.
+8. Keine echten kostenpflichtigen LLM-Aufrufe in Standardtests.
+9. Nach jedem Auftrag mindestens `Test-Boot.ps1` und die direkt betroffenen Tests ausfuehren.
+10. Im Abschlussbericht immer geaenderte Dateien, ausgefuehrte Befehle, Resultate und verbleibende Risiken nennen.
+
+### Globale Abnahmereihenfolge fuer Nacharbeiten
+
+1. `NA-01` Syntax- und Laufzeitblocker
+2. `NA-02` Test-Harness und ExitCodes
+3. `NA-03` Topologie und Hierarchie
+4. `NA-04` State-Schema und Run-History
+5. `NA-05` Router-Vertrag und Dashboard-Konfiguration
+6. `NA-06` Logging-Core
+7. `NA-07` Prozess-Supervisor
+8. `NA-08` Provider-ID-Normalisierung
+9. `NA-09` AgentRunner und Provider-Fallback
+10. `NA-10` Output-Validierung
+11. `NA-11` Deliberation und LLM-PART-RUNs
+12. `NA-12` MAIN-Run Resume und Checkpoint-Reuse
+13. `NA-13` Provider-/CLI-Test-Suite
+14. `NA-14` Direkte CLI-Aufrufe und Injection-Schutz
+15. `NA-15` Run-Summary und Dashboard-Statistiken
+16. `NA-16` Dashboard Typecheck, Lint und Hierarchie-UX
+17. `NA-17` Prozess- und Log-Retention
+18. `NA-18` Rename-Restarbeiten
+19. `NA-19` Optimizer-Aufteilung
+20. `NA-20` MemoryOptimization-Aufteilung
+21. `NA-21` Optimizer-/Memory-Dashboard
+22. `NA-22` Startskript-Menue und manueller Run-Start
+23. `NA-23` End-to-End-Abnahme
+
+---
+
+### NA-01 - PowerShell-Syntax- und Laufzeitblocker beseitigen
+
+Status: `[ERLEDIGT]`
+
+Pruefstand 2026-06-23:
+
+- Parserfehler in `AgentRunner.ps1` und `watcher.ps1` sind behoben.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Vorce-Factory\test\Test-PowerShellSyntax.ps1` prueft 67 PowerShell-Dateien ohne Parserfehler und endet mit ExitCode 0.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Vorce-Factory\test\Test-RunEngineParallel.ps1` besteht mit 29/29 Checks und ExitCode 0.
+- `RunEngine.ps1` verwendet kein `Receive-Job -Keep` mehr, sondern empfaengt den Job-Output nach Jobende genau einmal. Finale State-Objekte bleiben erhalten; fehlende Final-States werden als `missing_final_state` gewertet.
+- Der positive Teil von `Test-RunEngineParallel.ps1` verwendet die produktive Default-`JobFactory`. Seine sichtbare Terminalausgabe wird ueber den Information-Stream mitgeschnitten, ohne sie zu unterdruecken.
+- Fuer Alpha, Beta und Gamma werden jeweils zwei eindeutige Fixture-Textmarker sowie Queue-Start, PART-Start, PART-Ausfuehrung, PART-Abschluss, PART-Ende und Job-Abschluss automatisiert auf exakt ein Vorkommen geprueft.
+- Die bestehenden State-Pruefungen bleiben erfolgreich: drei finale State-Objekte im SUB-Aggregat, jedes genau einmal, positiver SUB-Run `completed`, fehlender Final-State als `failed` mit `error_class = missing_final_state` und zugehoeriger SUB-Run `failed`.
+- Negativkontrolle: `Test-RunEngineParallel.ps1 -InjectDuplicateMarker` dupliziert nur im temporaeren Alpha-Fixture `FIXTURE_Alpha_TEXT_MARKER_1`. Die Assertion findet zwei Vorkommen, der Lauf endet mit 28/29 Checks und ExitCode 1. Das temporaere Fixture-Verzeichnis wird danach entfernt.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Vorce-Factory\test\PromptManager-Test.ps1` besteht mit 5/5 Checks und ExitCode 0.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Vorce-Factory\test\Test-Boot.ps1` besteht mit 61/61 Checks und ExitCode 0.
+- Alle NA-01-Checkboxen und Pflichtpruefungen sind erfuellt.
+
+```text
+Du bist der Syntax- und Runtime-Reparatur-Agent fuer Vorce-Factory. Behebe zuerst ausschliesslich die bereits reproduzierten Blocker. Fuehre noch keine groessere Provider-, Router- oder State-Refaktorierung durch.
+
+Betroffene Dateien:
+- `Vorce-Factory/src/lib/integrations/AgentRunner.ps1`
+- `Vorce-Factory/var/watcher/watcher.ps1`
+- `Vorce-Factory/src/lib/engines/RunEngine.ps1`
+- neuer Test: `Vorce-Factory/test/Test-PowerShellSyntax.ps1`
+- neuer Test: `Vorce-Factory/test/Test-RunEngineParallel.ps1`
+
+Reproduzierte Fehler:
+1. `AgentRunner.ps1` ist bei `"$providerId:$modelTier"` unter Windows PowerShell nicht parsebar.
+2. `watcher.ps1` ist bei Strings mit `$ServerHost:` nicht parsebar.
+3. `Invoke-VorceSubRunParallel` liest mit `Receive-Job` zuerst Streaming-Ausgabe und danach ein zweites Mal das finale Ergebnis. Der erste Aufruf leert den Job-Output.
+4. Fehlendes State-Objekt wird aktuell faelschlich als `completed` aggregiert.
+
+Teilaufgaben:
+
+NA-01.1 - String-Interpolation korrigieren
+- Nutze `${providerId}:$modelTier` oder Formatstrings.
+- Nutze `${ServerHost}:$Port` oder Formatstrings.
+- Suche in allen `Vorce-Factory/**/*.ps1` nach weiteren Variablen direkt vor `:`.
+
+NA-01.2 - Parser-Test erstellen
+- Parse jede `.ps1` Datei unter `Vorce-Factory`, ausgenommen bewusst archivierte Fremdfixtures.
+- Nutze `[System.Management.Automation.Language.Parser]::ParseFile`.
+- Gib Datei, Zeile, Spalte, fehlerhaften Text und Meldung aus.
+- ExitCode `1`, sobald mindestens ein Parserfehler existiert.
+
+NA-01.3 - Parallel-Job-Ausgabe verlaesslich sammeln
+- Pro Job genau einen akkumulierten Output-Puffer fuehren.
+- Streaming-Ausgabe darf angezeigt werden, das finale State-Objekt muss trotzdem erhalten bleiben.
+- Alternativ Output erst nach Jobende genau einmal empfangen.
+- Das finale Objekt anhand der verbindlichen Felder `schema_version`, `id`, `name`, `type`, `status` erkennen.
+- Kein finales State-Objekt ist ein Fehler `missing_final_state`, niemals implizit `completed`.
+
+NA-01.4 - Paralleltest
+- Verwende drei lokale Fixture-PART-RUNs ohne Netzwerk.
+- Jeder Part schreibt mindestens zwei Textzeilen und gibt danach genau ein State-/Resultobjekt zurueck.
+- Assert: alle drei finalen Objekte kommen genau einmal im SUB-Aggregat an.
+- Assert: ein Fixture ohne finales Objekt wird als `failed` mit `missing_final_state` gespeichert.
+
+Akzeptanzkriterien:
+- Alle PowerShell-Dateien im aktiven Vorce-Factory-Scope sind parsebar.
+- `AgentRunner.ps1` und `watcher.ps1` koennen unter Windows PowerShell 5.1 dot-sourced bzw. geparst werden.
+- Parallel-Ausfuehrung verliert keine finalen State-Objekte.
+- Fehlende finale Objekte werden nicht als Erfolg gewertet.
+```
+
+Checkliste:
+
+- [x] Parserfehler in `AgentRunner.ps1` behoben.
+- [x] Parserfehler in `watcher.ps1` behoben.
+- [x] Repo-weiter Parser-Test vorhanden.
+- [x] Doppeltes/verlustbehaftetes `Receive-Job` behoben.
+- [x] Parallel-Fixture-Test vorhanden und erfolgreich.
+- [x] Produktiver Default-Jobpfad liefert drei finale State-Objekte genau einmal.
+- [x] Genau einmalige Child-Job-Ausgabe im automatisierten Regressionstest assertiert.
+- [x] Regression in `PromptManager-Test.ps1` beseitigt.
+
+---
+
+### NA-02 - Test-Harness, Assertions und ExitCodes verbindlich machen
+
+Status: `[ERLEDIGT]`
+
+QA-Pruefstand 2026-06-23:
+
+- `TestHelpers.ps1` stellt gemeinsame PASS-/FAIL-Zaehler, Exception-Assertions und `Complete-VorceTest` bereit. Eine isolierte Fehlassertion ergibt 0/1 Checks und ExitCode 1.
+- Alle fuenf fuer NA-02 genannten Tests verwenden den gemeinsamen Helper, setzen `$ErrorActionPreference = 'Stop'` und rufen `Complete-VorceTest` auf.
+- Erneute normale Testlaeufe bestehen: `PromptManager-Test.ps1` 5/5, `Test-Logging.ps1` 5/5, `Test-OrchestratorDryRun.ps1` 16/16, `Test-PlanningRun.ps1` 30/30 und `Test-RunSummary.ps1` 3/3; jeweils ExitCode 0.
+- Die vorhandene Fixture-Negativkontrolle `Test-RunEngineParallel.ps1 -InjectDuplicateMarker` erkennt das absichtliche Duplikat mit 28/29 Checks und ExitCode 1.
+- `Test-Logging.ps1` verwendet jetzt ausschliesslich `var/tmp/test-logging` und entfernt das Verzeichnis in `finally`.
+- `Test-PlanningRun.ps1` verwendet jetzt `var/tmp/test-planning-run` mit eigener Config und eigener Issue-Fixture; produktive Config-, DB- und Logdateien werden nicht mehr verwendet.
+- Ein Vorher-/Nachher-Vergleich ueber produktive Dateien unter `var/log`, `var/db`, `var/config`, `var/run-states` und `var/run-history` erkannte bei den erneuten Positivlaeufen keine neuen Inhaltsaenderungen. Laufend gesperrte Service-Logs konnten nicht gehasht werden, werden von den Testpfaden aber nicht adressiert.
+- Alle Testverzeichnisse unter `var/tmp/test-*` sind nach Positiv- und Negativlaeufen entfernt.
+- `Test-PowerShellSyntax.ps1` besteht mit 72 geprueften Dateien und ExitCode 0; `Test-Boot.ps1` besteht mit 61/61 Checks und ExitCode 0.
+- Die durch den frueheren destruktiven Logging-Test geloeschte versionierte Datei `var/log/events/vorce-events-20260621.jsonl` wurde in ihrem exakten HEAD-Inhalt wiederhergestellt.
+- Die eindeutig vom alten Test erzeugte Datei `var/log/events/vorce-events-20260623.jsonl` wurde entfernt. Andere produktive Logs wurden nicht veraendert.
+- `git diff --exit-code -- Vorce-Factory/var/log/events/vorce-events-20260621.jsonl` besteht; unter `Vorce-Factory/var/log` verbleibt kein NA-02-bedingter Diff.
+- Alle NA-02-Teilaufgaben und Akzeptanzkriterien sind erfuellt.
+
+```text
+Du bist Test-Infrastruktur-Agent. Sorge dafuer, dass gruene Prozess-ExitCodes wirklich bestandene Tests bedeuten.
+
+Betroffene Dateien:
+- `Vorce-Factory/test/PromptManager-Test.ps1`
+- `Vorce-Factory/test/Test-Logging.ps1`
+- `Vorce-Factory/test/Test-OrchestratorDryRun.ps1`
+- `Vorce-Factory/test/Test-PlanningRun.ps1`
+- `Vorce-Factory/test/Test-RunSummary.ps1`
+- weitere neue Tests aus diesem Nacharbeitsblock
+- optional neu: `Vorce-Factory/test/TestHelpers.ps1`
+
+Ist-Problem:
+Mehrere Tests zaehlen PASS/FAIL, geben aber auch bei FAIL den Prozess-ExitCode `0` zurueck.
+
+Teilaufgaben:
+
+NA-02.1 - Gemeinsame Testhelfer
+- Implementiere kleine Helper fuer PASS/FAIL, Exception-Assertions und Abschluss.
+- `Complete-VorceTest` beendet mit `exit 1`, wenn `failedCount > 0`.
+- Jeder Test druckt Gesamtzahl, bestanden und fehlgeschlagen.
+
+NA-02.2 - Bestehende Tests migrieren
+- Alle genannten Tests muessen einen expliziten korrekten ExitCode liefern.
+- Keine globale Exception darf zu ExitCode `0` fuehren.
+- Ein Test darf bei fehlender Voraussetzung nur dann `SKIP` sein, wenn die Voraussetzung optional ist.
+
+NA-02.3 - Negativkontrolle
+- Fuehre jeden migrierten Test einmal normal aus.
+- Fuehre mindestens einen Test gegen ein temporaer manipuliertes Fixture aus und belege ExitCode `1`.
+- Produktivdateien dabei nicht veraendern.
+
+Akzeptanzkriterien:
+- Jeder aktive Test liefert `0` nur bei vollstaendigem Erfolg.
+- Ein absichtlich fehlerhaftes Fixture liefert reproduzierbar `1`.
+- Testausgaben koennen in CI eindeutig ausgewertet werden.
+```
+
+Checkliste:
+
+- [x] Gemeinsame Testhelfer vorhanden oder einheitliches Muster umgesetzt.
+- [x] Alle fuer NA-02 genannten Tests haben bei den QA-Laeufen verlaessliche ExitCodes.
+- [x] Negativkontrolle mit ExitCode `1` reproduziert und dokumentiert.
+- [x] `Test-Logging.ps1` verwendet ausschliesslich ein temporaeres isoliertes Logverzeichnis.
+- [x] Aktuelle NA-02-Testlaeufe loeschen oder ueberschreiben keine produktiven Runtime-Dateien.
+- [x] Durch den frueheren Logging-Test geloeschte versionierte Eventdatei wiederhergestellt.
+- [x] Eindeutige alte Test-Eventdatei aus dem produktiven Logverzeichnis entfernt.
+
+---
+
+### NA-03 - Punkt 4A und Dashboard-Hierarchie vollstaendig abnehmen
+
+Status: `[ERLEDIGT]`
+
+QA-Pruefstand 2026-06-23:
+
+- `Test-RunTopology.ps1` besteht im aktuellen Repository mit 14/14 Checks und ExitCode 0.
+- `Test-RunHierarchy.ps1` beziehungsweise `Test-RunHierarchy.mjs` bestaetigt 5 MAIN-, 17 SUB- und 18 PART-RUNs sowie die bekannte Legacy-Datei `PART_FetchIssues.json`.
+- Der echte HTTP-Endpunkt `/run-hierarchy.json` antwortet mit HTTP 200 und liefert 5 MAIN-, 17 SUB- und 18 PART-RUNs.
+- `Test-Boot.ps1` verwendet `RunTopology.Common.ps1` und besteht mit 44/44 Checks.
+- Der Dashboard-Build besteht. `npm run lint` scheitert repositoryweit mit 18 Fehlern; eine `tsconfig.json` und damit ein konfigurierter eigenstaendiger Typecheck fehlen weiterhin. Diese Qualitaetspunkte werden spaetestens in NA-16 verbindlich.
+- Blocker 1: `RunTopology.Common.ps1` verwendet `expectedPart.id` nirgends. Ein Fixture mit `id = BROKEN-ID` fuer einen PART-RUN besteht weiterhin mit 14/14 Checks und ExitCode 0.
+- Blocker 2: `Test-RunTopology.ps1` und `Test-Boot.ps1` berechnen die angeblich exakten Sollzahlen aus dem zu pruefenden Manifest. In einem konsistent auf vier MAIN-RUNs reduzierten Fixture meldet die Assertion `exakt 5 MAIN-RUNs` trotzdem PASS. Die Werte 5/17/18 muessen als unabhaengige Konstanten beziehungsweise unabhaengiges Sollmanifest geprueft werden.
+- Blocker 3: `runHierarchy.js` klassifiziert jedes File mit Praefix `PART_PART-RUN-*` und `type = PART` als kanonisch, auch wenn dessen Name und Script in keinem Manifest vorkommen. Das Fixture `PART_PART-RUN-99_MR-99_Unknown__UnknownPart.json` wird deshalb weder einem Knoten zugeordnet noch unter `legacy_orphan_states` ausgegeben.
+- Von den sieben geforderten Negativtests sind nur sechs echte manipulierte Fixtures. Der siebte Check prueft lediglich den unveraenderten positiven Report und belegt keinen Fehlerfall der Legacy-Klassifizierung.
+- Der UI-Vertrag ist weitgehend umgesetzt: Hierarchie-Typen sind definiert, JSON-Buttons verwenden `latest_state_path`, MAIN-Knoten werden initial geoeffnet, aktive SUB-Knoten initial geoeffnet und inaktive SUB-Knoten sichtbar gehalten.
+- NA-03 bleibt in Arbeit, bis PART-IDs kreuzvalidiert, feste 5/17/18-Sollwerte unabhaengig abgesichert, unbekannte kanonisch aussehende States als Orphans erkannt und alle sieben Negativfaelle als echte Fixtures ausgefuehrt werden.
+
+Erneute QA der fuenf Restfehler am 2026-06-23:
+
+- PART-ID-Pruefung behoben: `RunTopology.Common.ps1` vergleicht jetzt `id`, `name`, `script` und `directory`. Das manipulierte `BROKEN-ID`-Fixture wird erkannt; `Test-RunTopology.ps1` besteht im Positivlauf mit 15/15 Checks.
+- Feste Sollzahlen teilweise behoben: `Test-RunTopology.ps1` verwendet unabhaengige Konstanten 5/17/18. Ein auf vier MAIN-RUNs reduziertes Fixture erzeugt jetzt bei `exakt 5 MAIN-RUNs` korrekt FAIL und ExitCode 1. `Test-Boot.ps1` berechnet seine Beschriftung und Sollzahlen jedoch weiterhin aus dem zu pruefenden Manifest; dieser zweite Testpfad ist noch nicht unabhaengig.
+- Legacy-Erkennung funktional behoben: `runHierarchy.js` akzeptiert nur noch exakte, aus dem Manifest gebildete State-Stems. Das Fixture `PART_PART-RUN-99_MR-99_Unknown__UnknownPart.json` erscheint korrekt in `legacy_orphan_states`.
+- Sieben echte Negativfixtures vorhanden: Der siebte manipulierte Fixture-Pfad prueft ein fehlerhaftes PART-ID-Feld und einen unbekannten kanonisch aussehenden PART-State. Beide Assertions bestehen.
+- Dashboard-Qualitaet funktional verbessert: `npm run lint`, `npm run typecheck` und `npm run build` bestehen. Der echte Endpoint liefert weiterhin HTTP 200 und 5/17/18.
+- Typecheck-Konfiguration noch nicht commitfaehig: `Vorce-Factory/web/Dashboard/tsconfig.json` wird durch die globale Regel `*.json` in `.gitignore` ignoriert und ist nicht versioniert. `package.json` verweist damit auf eine Datei, die in einem frischen Checkout fehlen wuerde.
+- Ergebnis: Restfehler 1, 3 und 4 sind behoben. Restfehler 2 und 5 sind nur teilweise behoben. NA-03 bleibt `[IN ARBEIT]`.
+
+Finale QA der letzten zwei Restfehler am 2026-06-23:
+
+- `Test-Boot.ps1` verwendet jetzt die unabhaengigen Konstanten 5 MAIN-, 17 SUB- und 18 PART-RUNs. Der normale Lauf besteht mit 44/44 Checks und ExitCode 0.
+- `Test-RunTopology.ps1` verwendet ebenfalls feste 5/17/18-Sollwerte. Ein konsistent auf vier MAIN-RUNs reduziertes Fixture erzeugt bei `exakt 5 MAIN-RUNs` korrekt FAIL und ExitCode 1.
+- `.gitignore` enthaelt jetzt die Ausnahme `!Vorce-Factory/web/Dashboard/tsconfig.json`. Die Datei erscheint als untracked statt ignored; `git add --dry-run -- Vorce-Factory/web/Dashboard/tsconfig.json` besteht und meldet die Datei als hinzufuegbar.
+- `npm run typecheck`, `npm run lint` und `npm run build` bestehen.
+- `Test-RunTopology.ps1` besteht mit 15/15 Checks, `Test-RunHierarchy.ps1` liefert 5/17/18, und `Test-PowerShellSyntax.ps1` findet in 71 Dateien keine Parserfehler.
+- Alle fuenf zuvor offenen Fehler und alle NA-03-Akzeptanzkriterien sind damit erfuellt.
+
+```text
+Du bist Topologie- und Hierarchie-Agent. Setze Prompt 4A und die noch offenen Teile aus 1A, 1B und 1D vollstaendig um.
+
+Betroffene Dateien:
+- neu: `Vorce-Factory/test/Test-RunTopology.ps1`
+- neu: `Vorce-Factory/test/Test-RunHierarchy.ps1` oder testbares Node-Skript
+- `Vorce-Factory/test/Test-Boot.ps1`
+- `Vorce-Factory/web/Dashboard/vite.config.ts`
+- `Vorce-Factory/web/Dashboard/src/types.ts`
+- `Vorce-Factory/web/Dashboard/src/components/RunHierarchyView.tsx`
+
+Verbindliche aktuelle Sollwerte vor Punkt 9:
+- 5 MAIN-RUNs
+- 17 SUB-RUNs
+- 18 PART-RUNs
+
+Teilaufgaben:
+
+NA-03.1 - Statisches Soll-Manifest
+- Uebernimm die exakte Matrix aus Prompt 4A in ein lesbares Testmanifest.
+- Generiere Sollwerte niemals aus der zu pruefenden Ordnerstruktur.
+
+NA-03.2 - Kreuzvalidierung
+- Pruefe MAIN-Verzeichnisse und exakt einen korrekten Router pro MAIN.
+- Pruefe SUB-Ordner, gleichnamige SUB-Datei, Config-ID, Config-Name und Config-Script.
+- Pruefe exakte PART-Dateinamen, PART-ID und Parent-Zuordnung.
+- Pruefe interne Registrierung jedes PART-RUNs im SUB-Skript.
+- Zusaetzliche oder fehlende Runs muessen den konkreten Pfad nennen.
+
+NA-03.3 - Hierarchie-API testbar exportieren
+- Extrahiere `getRunHierarchy()` so, dass ein automatisierter Test die Funktion ohne laufenden Browser aufrufen kann.
+- API muss exakt 5/17/18 liefern.
+- Kanonische State-Dateien wie `PART_PART-RUN-01_...json` duerfen nicht als Legacy-Orphan gelten.
+- Echte Legacy-Dateien wie `PART_FetchIssues.json` bleiben separat unter `legacy_orphan_states`.
+- Legacy-Orphans duerfen nie Root-Knoten sein.
+
+NA-03.4 - UI-Vertrag
+- Definiere die Hierarchie-Typen ohne `any` fuer MAIN, SUB, PART und Router-Decision.
+- JSON-State-Buttons verwenden ausschliesslich `latest_state_path`.
+- Alle MAIN-Knoten initial offen.
+- Aktive SUB-Knoten initial offen.
+- Inaktive SUB-Knoten sichtbar, aber initial geschlossen.
+- Status und Inaktivgrund muessen ohne Klick erkennbar sein.
+
+NA-03.5 - Negativtests
+- Fehlender Router.
+- Zusaetzlicher MAIN-RUN.
+- Falscher Config-Scriptpfad.
+- SUB ohne gleichnamige Skriptdatei.
+- PART mit falschem Parentnamen.
+- Vorhandene, aber nicht intern registrierte PART-Datei.
+- Kanonischer PART-State faelschlich als Legacy klassifiziert.
+
+Akzeptanzkriterien:
+- `Test-RunTopology.ps1` validiert exakt 5/17/18.
+- Der Test erkennt alle sieben Negativfixtures.
+- `/run-hierarchy.json` liefert exakt 5 Root-Knoten.
+- Keine kanonischen States werden als Legacy-Orphan gemeldet.
+- `Test-Boot.ps1` ruft den Topologie-Test auf oder nutzt exakt dasselbe Manifest.
+```
+
+Checkliste:
+
+- [x] Dedizierter Topologie-Test vorhanden.
+- [x] Aktueller Repository-Bestand liefert 5/17/18.
+- [x] Feste 5/17/18-Sollwerte in `Test-RunTopology.ps1` und `Test-Boot.ps1` unabhaengig vom zu pruefenden Manifest abgesichert.
+- [x] Config, Router, Ordner, Registrierung und PART-IDs vollstaendig kreuzvalidiert.
+- [x] Hierarchie-Funktion und echter HTTP-Endpunkt automatisiert getestet.
+- [x] Legacy-Klassifizierung erkennt auch unbekannte `PART_PART-RUN-*`-States als Orphans.
+- [x] Alle sieben Negativfaelle verwenden echte manipulierte Fixtures.
+- [x] Dashboard-Lint, Typecheck und Build bestehen lokal.
+- [x] `tsconfig.json` ist nicht ignoriert und kann gemeinsam mit dem Typecheck committed werden.
+
+---
+
+### NA-04 - Punkt 4C: State-Schema, History und Zusatzfelder verlustfrei machen
+
+Status: `[OFFEN]`
+
+```text
+Du bist State-Schema-Agent. Konsolidiere MAIN-, SUB- und PART-States, bevor Resume oder Statistik weiter ausgebaut werden.
+
+Betroffene Dateien:
+- `Vorce-Factory/src/lib/state/StateManager.ps1`
+- `Vorce-Factory/src/lib/engines/RunEngine.ps1`
+- `Vorce-Factory/src/orchestrator/Vorce-Orchestrator.ps1`
+- alle aktiven SUB-RUN-Skripte
+- neu: `Vorce-Factory/test/Test-RunStateSchema.ps1`
+
+Teilaufgaben:
+
+NA-04.1 - Verbindliches Schema 2
+- Nutze die Felder aus Prompt 4C.
+- MAIN setzt `main_run_id` auf die eigene `id`.
+- SUB setzt `main_run_id` auf MAIN-ID und `parent_run_id` auf MAIN-ID.
+- PART setzt `main_run_id` auf MAIN-ID und `parent_run_id` auf SUB-ID.
+- SUB benoetigt deshalb eine echte eigene State-ID vor dem Start seiner PART-RUNs.
+
+NA-04.2 - Verlustfreies Speichern
+- `Save-VorceRunState` darf zusaetzliche definierte Felder nicht verwerfen.
+- Unterstuetze mindestens `resume`, `execution_graph`, `attempts`, `result_ref`, `result_id`, `reusable`, `error`, `error_class`, `retry_after` und `parts`.
+- Verwende entweder einen explizit erweiterten Vertrag oder eine sichere Kopie aller erlaubten Properties.
+- Keine unkontrollierte Serialisierung von Runspaces, Exceptions oder Prozessobjekten.
+
+NA-04.3 - Latest und History
+- Latest-Datei bleibt unter `var/run-states`.
+- Immutable History liegt unter `var/run-history/<TYPE>/<RunName>/<RunId>.json`.
+- Ein Save derselben Run-ID darf die zugehoerige History-Datei atomar auf den neuesten Status bringen, bis der Run final ist.
+- Nach finalem Status darf dieselbe Run-ID nicht still mit widerspruechlichem Inhalt ueberschrieben werden.
+
+NA-04.4 - Statushelper
+- Implementiere zentrale Helper fuer `running`, `completed`, `failed`, `skipped`, `waiting_provider` und `reused`.
+- Helper setzen Timestamp, Dauer und Fehlerfelder konsistent.
+
+NA-04.5 - Direkte Legacy-Writes entfernen
+- RunEngine darf nicht parallel eine alte reduzierte JSON-Datei per `Set-Content` und danach eine andere Schema-2-Datei schreiben.
+- Alle neuen States laufen ueber `Save-VorceRunState`.
+- Legacy-Dateien bleiben lesbar, werden aber nicht mehr neu erzeugt.
+
+NA-04.6 - Tests
+- MAIN/SUB/PART Parent-IDs.
+- Zusatzfelder bleiben nach Save/Read erhalten.
+- Latest und History haben denselben finalen Status.
+- Null-sicheres `run_settings`.
+- Legacy-State wird erkannt, aber nicht als Schema 2 ausgegeben.
+
+Akzeptanzkriterien:
+- Neue States sind durchgaengig Schema 2.
+- SUB- und PART-Parentbeziehungen sind korrekt.
+- Resume-/Attempt-Felder gehen beim Speichern nicht verloren.
+- Keine doppelte Legacy-/Schema-2-Schreiblogik bleibt aktiv.
+```
+
+Checkliste:
+
+- [ ] Schema-2-Vertrag vollstaendig.
+- [ ] SUB erhaelt eigene ID vor PART-Ausfuehrung.
+- [ ] Zusatzfelder werden verlustfrei gespeichert.
+- [ ] Latest-/History-Vertrag getestet.
+- [ ] Direkte Legacy-Writes entfernt.
+
+---
+
+### NA-05 - Punkt 4B: Router-Vertrag, Conditions und sichere Dashboard-Bearbeitung
+
+Status: `[OFFEN]`
+
+```text
+Du bist Router-Engine- und Config-Agent. Implementiere den in Prompt 4B beschriebenen Vertrag vollstaendig.
+
+Betroffene Dateien:
+- neu: `Vorce-Factory/src/lib/engines/RouterEngine.ps1`
+- alle 5 Router unter `Vorce-Factory/src/runs/MAIN-RUN-*`
+- `Vorce-Factory/src/orchestrator/Vorce-Orchestrator.ps1`
+- `Vorce-Factory/var/config/autopilot-config.json`
+- `Vorce-Factory/web/Dashboard/src/types.ts`
+- `Vorce-Factory/web/Dashboard/src/pages/SettingsPage.tsx`
+- `Vorce-Factory/web/Dashboard/vite.config.ts`
+- neu: `Vorce-Factory/test/Test-Routers.ps1`
+
+Teilaufgaben:
+
+NA-05.1 - Config-Vertrag migrieren
+- Jeder Router-Eintrag erhaelt `enabled`, `mode`, `condition`, `condition_settings`, `dashboard_editable`.
+- IDs, Namen und Scripts bleiben kanonisch.
+- Nutze ausschliesslich die Condition-Whitelist aus Prompt 4B.
+
+NA-05.2 - Zentraler Resolver
+- Implementiere `Resolve-VorceRouterDecision`.
+- Rueckgabe fuer jeden konfigurierten SUB-RUN:
+  `{id,name,script,configured_enabled,mode,condition,active,reason,evidence}`.
+- `enabled=false` hat immer Vorrang.
+- `manual_only` ist nur bei explizitem Force aktiv.
+- Fehlende Datenquelle liefert `data_source_unavailable`, nicht Crash.
+- Fehlendes Script liefert `script_missing`.
+
+NA-05.3 - Unsichere Altlogik entfernen
+- Planning/Strategy nicht anhand der Gesamtzahl aller Issues aktivieren.
+- LocalAgentCheck nicht ausschliesslich anhand eines breiten Prozessnamens-Regex aktivieren.
+- Housekeeping nicht bei jedem CheckAndDoing-Lauf starten.
+- ReviewDispatch muss Drafts und bereits erledigte Reviews ausschliessen.
+- Optimizer/SystemAnalysis erst ab ausreichender Samplezahl.
+
+NA-05.4 - Persistenz
+- Orchestrator speichert die vollstaendige Decision-Liste unter `MainState.metadata.router_decision`.
+- Speichere Router-Key und Timestamp.
+- Dashboard darf Conditions nicht erneut ausfuehren.
+
+NA-05.5 - Settings-UI
+- Pro SUB nur Toggle, Mode-Segment, erlaubtes Condition-Dropdown und whitelisted Zahlenfelder.
+- ID und Script nur lesbar.
+- Keine freien PowerShell-Ausdruecke oder Shell-Kommandos.
+
+NA-05.6 - Sichere Config-API
+- Validiere alle 5 Router-Keys.
+- Validiere ID, Name und Script gegen den Run-Katalog.
+- Validiere Mode und Condition gegen Whitelists.
+- Begrenze Zahlenfelder.
+- Fehlerantwort HTTP 400 mit Feldpfad.
+- Vor Write Backup unter `var/config/backups`.
+- Schreibe atomar.
+
+NA-05.7 - Tests
+- Jede Condition mindestens einmal true und false.
+- `enabled=false`, `manual_only`, fehlendes `gh`, leere JSON-Datei, fehlende State-Felder.
+- Alle aktiven Scripts existieren.
+- API-Negativtests fuer unbekannte Condition, falsches Script und ungueltigen Grenzwert.
+
+Akzeptanzkriterien:
+- Alle Router verwenden denselben Resolver.
+- Jede Entscheidung ist deterministisch und begruendet.
+- Dashboard und Backend teilen denselben Vertrag.
+- Beliebiges JSON kann nicht mehr gespeichert werden.
+```
+
+Checkliste:
+
+- [ ] Router-Config vollstaendig migriert.
+- [ ] Zentraler RouterEngine-Helper vorhanden.
+- [ ] Alle Router auf zentralen Vertrag umgestellt.
+- [ ] Router-Decision vollstaendig persistiert.
+- [ ] Settings-UI umgesetzt.
+- [ ] Config-API validiert und sichert Backups.
+- [ ] Routertests bestehen.
+
+---
+
+### NA-06 - Punkt 5A: Logging-Core vollstaendig integrieren
+
+Status: `[OFFEN]`
+
+```text
+Du bist Logging-Core-Agent. Die vorhandene Funktion `Write-VorceLogEntry` ist nur eine Grundlage. Binde sie in alle relevanten Lebenszyklen ein.
+
+Betroffene Dateien:
+- `Vorce-Factory/src/lib/logging/Write-Log.ps1`
+- `Vorce-Factory/src/lib/utils/StatusPrinter.ps1`
+- `Vorce-Factory/Vorce-Factory.ps1`
+- `Vorce-Factory/src/orchestrator/Vorce-Orchestrator.ps1`
+- `Vorce-Factory/src/lib/engines/RunEngine.ps1`
+- `Vorce-Factory/src/lib/integrations/AgentRunner.ps1`
+- `Vorce-Factory/src/tools/services/sync-service.ps1`
+- `Vorce-Factory/test/Test-Logging.ps1`
+
+Teilaufgaben:
+
+NA-06.1 - Eine Logimplementierung
+- Entferne die konkurrierende lokale `Write-VorceLog`-/`Rotate-Logs`-Implementierung aus `Vorce-Factory.ps1`.
+- Dot-source das zentrale Logging-Modul.
+- Kompatibilitaetswrapper duerfen intern nur `Write-VorceLogEntry` aufrufen.
+
+NA-06.2 - Session- und Korrelationskontext
+- Erzeuge beim Prozessstart genau eine `session_id`.
+- MAIN verwendet seine `main_run_id` als Korrelation.
+- SUB/PART erhalten Session-, Main-, Parent- und eigene Run-ID.
+- Background-Jobs erhalten den Kontext explizit.
+
+NA-06.3 - Pflicht-Events
+- MAIN/SUB/PART: initialized, started, completed, failed, skipped, reused, waiting_provider.
+- Router: Decision mit Condition, Reason und kleiner Evidence.
+- Provider: attempt_started, attempt_failed, fallback_selected, attempt_succeeded, chain_exhausted.
+- State: save_failed als ERROR.
+- Prozess: started, healthy, degraded, stopped, crashed.
+
+NA-06.4 - StatusPrinter
+- RunStart und RunEnd schreiben Terminal und genau ein strukturiertes Event.
+- Keine Doppellogs durch Wrapper-Ketten.
+- Dekorative Header muessen nicht in JSONL.
+
+NA-06.5 - Redaction
+- Redigiere Message und serialisierbare Stringwerte innerhalb von `data`.
+- Beruecksichtige Auth-Env-Variablen aus Provider-Registry.
+- Keine Prompts oder kompletten LLM-Outputs in Standardlogs.
+
+NA-06.6 - Parallelitaet
+- JSONL-Schreibvorgaenge aus mindestens drei Jobs muessen valide bleiben.
+- Nutze Mutex/File-Lock oder per-Job-Dateien mit kontrolliertem Merge.
+
+NA-06.7 - Tests erweitern
+- INFO und ERROR in allen Sinks.
+- Fake-Token in Message und Data.
+- 3 Jobs mit je 20 Events.
+- Jede JSONL-Zeile parsebar.
+- RunStart und RunEnd mit derselben Run-ID.
+
+Akzeptanzkriterien:
+- Ein kompletter MAIN/SUB/PART-Lebenszyklus ist ueber IDs rekonstruierbar.
+- Keine zweite aktive Logimplementierung bleibt.
+- Parallel erzeugtes JSONL ist vollstaendig parsebar.
+```
+
+Checkliste:
+
+- [ ] Zentrale Logimplementierung exklusiv genutzt.
+- [ ] Session-/Run-Kontext wird weitergereicht.
+- [ ] Pflicht-Events implementiert.
+- [ ] StatusPrinter integriert.
+- [ ] Redaction fuer Message und Data.
+- [ ] Paralleltest erfolgreich.
+
+---
+
+### NA-07 - Punkt 5B: Prozess-Supervisor und sichere Stoplogik
+
+Status: `[OFFEN]`
+
+```text
+Du bist Prozess-Supervisor-Agent. Ersetze die breite port-/regexbasierte Prozessverwaltung durch eine PID-basierte Registry.
+
+Betroffene Dateien:
+- `Vorce-Factory/Start-Vorce-Factory.ps1`
+- `Vorce-Factory/Vorce-Factory.ps1`
+- `Vorce-Factory/src/tools/services/sync-service.ps1`
+- optional `Vorce-Factory/web/Dashboard/server/WebSocketServer.js`
+- neu: `Vorce-Factory/test/Test-ProcessSupervisor.ps1`
+
+Teilaufgaben:
+
+NA-07.1 - Prozessregistry
+- Schreibe atomar `var/tmp/vorce-processes.json`.
+- Speichere die Felder aus Prompt 5B.
+- Aktualisiere Registry nach erfolgreichem Start, Healthwechsel und Stop.
+
+NA-07.2 - Verifizierter Stop
+- Zuerst Registry-PID verwenden.
+- Vor Stop CommandPath und WorkingDirectory pruefen.
+- Portfallback nur 5173/5174 und nur nach Prozessidentitaetspruefung.
+- Nie fremde Listener allein wegen des Ports beenden.
+
+NA-07.3 - Health
+- Dashboard `/api/health`.
+- Sync-Service eigener Health-Endpunkt oder klar dokumentierter Prozess-/Socketcheck.
+- Factory-Loop Heartbeatdatei.
+- Defaults 60 Sekunden Timeout und 1 Sekunde Polling.
+
+NA-07.4 - Startfehler
+- `npm install` ExitCode pruefen.
+- Fehlendes npm, PowerShell, Script oder Module klar melden.
+- Letzte 30 stdout- und 30 stderr-Zeilen anzeigen.
+- Vollstaendige Pfade nennen.
+
+NA-07.5 - Vordergrundstatus
+- Status nur alle 10 Sekunden oder bei Aenderung.
+- `healthy|starting|degraded|stopped`.
+- `-Detach` beendet nach erfolgreicher Starttabelle.
+
+NA-07.6 - Tests
+- Registry atomar schreiben und lesen.
+- Fremde Fake-PID nicht stoppen.
+- CommandPath-Mismatch ablehnen.
+- Crashauszug begrenzen.
+- Heartbeat stale/healthy erkennen.
+
+Akzeptanzkriterien:
+- Jede gestartete Komponente besitzt Registry-Eintrag, PID, Health und Logpfade.
+- Stop arbeitet primaer PID-basiert und beendet keine fremden Prozesse.
+```
+
+Checkliste:
+
+- [ ] Prozessregistry umgesetzt.
+- [ ] Sichere Stopvalidierung umgesetzt.
+- [ ] Healthchecks und Heartbeat vorhanden.
+- [ ] Crashdiagnose vorhanden.
+- [ ] Supervisor-Tests bestehen.
+
+---
+
+### NA-08 - Punkt 8A: Provider-ID-Normalisierung zentralisieren
+
+Status: `[OFFEN]`
+
+```text
+Du bist Provider-ID-Agent. Entferne die doppelte Alias-Map und stelle alle Aufrufer auf eine einzige Quelle um.
+
+Betroffene Dateien:
+- neu oder passend: `Vorce-Factory/src/lib/integrations/ProviderRegistry.ps1`
+- `Vorce-Factory/src/lib/engines/QuotaManager.ps1`
+- `Vorce-Factory/src/lib/integrations/AgentRunner.ps1`
+- alle Treffer fuer `Test-VorceQuota`, `Register-VorceQuotaUsage`, `Invoke-VorceAgent`
+- `DispatchReviews.ps1`
+- neu: `Vorce-Factory/test/Test-ProviderAliases.ps1`
+
+Teilaufgaben:
+
+NA-08.1 - Eine Alias-Map
+- `Resolve-VorceProviderId` existiert genau einmal.
+- Nutze kanonische IDs und Aliase aus Prompt 8A.
+- Unbekannter Name liefert strukturiert `unknown_provider`, nicht den ungeprueften Eingabestring.
+
+NA-08.2 - Aufrufer migrieren
+- QuotaManager und AgentRunner laden denselben Helper.
+- Run-Skripte verwenden kanonische IDs.
+- Dashboard zeigt kanonische ID plus Label.
+
+NA-08.3 - Warnung
+- Legacy-Alias erzeugt maximal ein WARN-Event pro Session.
+
+NA-08.4 - Tests
+- Jeder erlaubte Alias.
+- Jede kanonische ID.
+- Gross-/Kleinschreibung und Whitespace.
+- Unbekannter Provider.
+- Beweis, dass keine zweite Alias-Map im aktiven Code existiert.
+
+Akzeptanzkriterien:
+- Provider-Normalisierung ist zentral.
+- Keine Quota- oder Runner-Abweichung durch unterschiedliche Alias-Maps.
+```
+
+Checkliste:
+
+- [ ] Zentraler ProviderRegistry-Helper.
+- [ ] Doppelte Maps entfernt.
+- [ ] Aufrufer migriert.
+- [ ] Alias-Tests bestehen.
+
+---
+
+### NA-09 - Punkt 6A: AgentRunner korrekt und vollstaendig implementieren
+
+Status: `[OFFEN]`
+
+```text
+Du bist AgentRunner-Agent. Implementiere den Provider-Runner erst nach NA-01 und NA-08.
+
+Betroffene Dateien:
+- `Vorce-Factory/src/lib/integrations/AgentRunner.ps1`
+- `Vorce-Factory/src/lib/engines/QuotaManager.ps1`
+- `Vorce-Factory/var/config/quota-registry.json`
+- `Vorce-Factory/var/config/autopilot-config.json`
+- neu: `Vorce-Factory/test/Test-AgentRunner.ps1`
+
+Teilaufgaben:
+
+NA-09.1 - Providerstatus und Quota
+- `enabled=false`, unbekannt, command_missing, auth_missing und quota_exhausted vor Prozessstart behandeln.
+- Usage nur nach echtem Prozessstart erhoehen.
+- Erfolg, retryable Fehler und nicht gestartete Versuche getrennt zaehlen.
+
+NA-09.2 - Argumentbau
+- `{PROMPT}` und `{MODEL}` ersetzen, ohne den Platzhalter vorher zu entfernen.
+- Argument-Transport: Prompt bleibt einzelnes Argument.
+- Stdin-Transport: Prompt nicht in Argumentliste.
+- Tempfile-Transport: Registry benoetigt einen sicheren `{PROMPT_FILE}`-Platzhalter.
+- Keine Shell-String-Evaluation.
+
+NA-09.3 - Artefaktpfad
+- `var/tmp/agent-artifacts/<main_run_id>/<part_run_id>/<attempt_id>/`.
+- stdout und stderr getrennt.
+- Promptdatei nach Versuch entfernen oder nur bei expliziter Debugpolicy redigiert erhalten.
+
+NA-09.4 - Timeout
+- Prozessbaum gezielt beenden.
+- ExitCode und Fehlerklasse speichern.
+
+NA-09.5 - Ergebnis
+- Verwende vollstaendiges Ergebnisobjekt aus Prompt 6A.
+- stdout und stderr nicht zu einem scheinbar erfolgreichen fachlichen Output vermischen.
+- Erfolg basiert auf ExitCode und validiertem stdout.
+
+NA-09.6 - Chain
+- Reihenfolge gemaess Prompt 6A.
+- Duplikate entfernen.
+- Jules als `unsupported_for_cli`.
+- Nach Chain-Ende `status=waiting_provider`, `retry_after`, `resume_required=true`.
+- Keine blockierende 15-Minuten-Wartezeit.
+
+NA-09.7 - Tests
+- FakeCLI success, exit 1, timeout, empty, invalid JSON.
+- Chain missing -> timeout -> success.
+- Disabled, auth_missing, quota_exhausted und Jules.
+- Prompt kommt bei argument/stdin/tempfile exakt an.
+- Usage wird nur bei Prozessstart erhoeht.
+
+Akzeptanzkriterien:
+- Jeder Registry-Provider wird ausgefuehrt oder exakt begruendet geskippt.
+- Prompttransport funktioniert nachweislich.
+- Keine Syntax- oder `Unbekannter Agent`-Fehler.
+```
+
+Checkliste:
+
+- [ ] Enabled-/Quota-Pruefung.
+- [ ] Argument-/stdin-/tempfile-Transport.
+- [ ] Artefaktstruktur korrekt.
+- [ ] Timeout beendet Prozessbaum.
+- [ ] Vollstaendiges Ergebnisobjekt.
+- [ ] Chain-Ende liefert Resume-Daten.
+- [ ] FakeCLI-Tests bestehen.
+
+---
+
+### NA-10 - Punkt 7C: Output-Schema und Fehlerklassifizierung
+
+Status: `[OFFEN]`
+
+```text
+Du bist AgentResultValidator-Agent. Implementiere die fachliche Validierung getrennt von der Prozessausfuehrung.
+
+Betroffene Dateien:
+- neu: `Vorce-Factory/src/lib/integrations/AgentResultValidator.ps1`
+- `Vorce-Factory/src/lib/integrations/AgentRunner.ps1`
+- `Vorce-Factory/src/lib/engines/DeliberationEngine.ps1`
+- LLM-verarbeitende PART-RUNs
+- neu: `Vorce-Factory/test/Test-AgentResultValidation.ps1`
+
+Teilaufgaben:
+- Unterstuetze `text`, `json`, `json_schema`, `exact`.
+- Entferne nur umschliessende Markdown-Codefences.
+- Keine erfundene JSON-Reparatur.
+- Trenne Provider-Wrapper von fachlichem Payload.
+- Pruefe Pflichtfelder und Typen.
+- Klassifiziere alle Fehlerklassen aus Prompt 7C.
+- Setze `retryable` und `fallback_recommended` zentral.
+- `no_work`, `no_changes`, `no_prs`, `no_delegations`, `insufficient_data` sind gueltige Nicht-Fehler.
+- Erfolgsstate speichert Summary, Hash und Artefaktpfad statt langem Rohoutput.
+
+Tests:
+- Mindestens ein Fixture pro Fehlerklasse.
+- Mindestens ein Fixture pro gueltigem Nicht-Fehler.
+- JSON in Codefence.
+- JSON mit fehlendem Pflichtfeld.
+- Exact-Output `OK`.
+
+Akzeptanzkriterien:
+- Invalides fachliches Ergebnis kann nicht als Provider-Erfolg durchlaufen.
+- Gueltiges `no_work` loest keinen Fallback aus.
+```
+
+Checkliste:
+
+- [ ] Validator implementiert.
+- [ ] Runner angebunden.
+- [ ] Fehlerklassifizierung vollstaendig.
+- [ ] Nicht-Fehler korrekt behandelt.
+- [ ] Fixture-Tests bestehen.
+
+---
+
+### NA-11 - Punkt 6B: Deliberation und LLM-PART-RUNs korrekt anbinden
+
+Status: `[OFFEN]`
+
+```text
+Du bist Deliberation-Agent. Migriere alle fachlichen LLM-Aufrufe auf den getesteten Runner und Validator.
+
+Betroffene Dateien:
+- `Vorce-Factory/src/lib/engines/DeliberationEngine.ps1`
+- Strategy/CreateProposal-PART-RUN
+- weitere LLM-Treffer unter `Vorce-Factory/src`
+- neu: `Vorce-Factory/test/Test-DeliberationFallback.ps1`
+
+Teilaufgaben:
+
+NA-11.1 - Kontext
+- MAIN-ID, SUB-ID, PART-ID und eigene `phase_id` je Proposal/Critique/Synthesis.
+- `$MainRun` darf nicht als Ersatz fuer eine echte `main_run_id` verwendet werden.
+
+NA-11.2 - Datenweitergabe
+- Uebergib nur den fachlichen validierten Payload in den naechsten Prompt.
+- Nicht das komplette Provider-Wrapperobjekt.
+
+NA-11.3 - Status
+- Proposal chain_exhausted -> `waiting_provider`.
+- Critique fehlgeschlagen und `fallback_to_single=true` -> explizit `single_agent_fallback`.
+- Synthesis fehlgeschlagen darf nicht still als normaler Proposal-Erfolg erscheinen.
+- `waiting_provider` muss bis RunEngine propagiert werden.
+
+NA-11.4 - CreateProposal
+- Wenn Deliberation `waiting_provider` liefert, kein Proposal mit Status `created` speichern.
+- Kein `proposal_created` zurueckgeben.
+- Speichere Checkpoint und Artefaktreferenzen.
+
+NA-11.5 - Tests
+- Proposal-Erfolg.
+- Proposal chain_exhausted.
+- Critique-Fallback.
+- Synthesis-Fallback.
+- Gueltiges no_work.
+- Kein falsches Proposal bei waiting_provider.
+
+Akzeptanzkriterien:
+- Keine Phase taeuscht Erfolg vor.
+- Jede Phase und jeder Attempt sind nachvollziehbar.
+```
+
+Checkliste:
+
+- [ ] Echter Run-/Phase-Kontext.
+- [ ] Validierter Payload zwischen Phasen.
+- [ ] waiting_provider korrekt propagiert.
+- [ ] Kein falsches Proposal gespeichert.
+- [ ] Deliberation-Tests bestehen.
+
+---
+
+### NA-12 - Punkt 6C: MAIN-Run Resume, Checkpoint und Wiederverwendung
+
+Status: `[OFFEN]`
+
+```text
+Du bist Resume-Agent. Implementiere eine echte Wiederaufnahme desselben MAIN-RUNs.
+
+Betroffene Dateien:
+- `Vorce-Factory/src/lib/state/StateManager.ps1`
+- `Vorce-Factory/src/lib/engines/RunEngine.ps1`
+- `Vorce-Factory/src/orchestrator/Vorce-Orchestrator.ps1`
+- `Vorce-Factory/Vorce-Factory.ps1`
+- `Vorce-Factory/src/lib/integrations/AgentRunner.ps1`
+- Seiteneffekt-PART-RUNs
+- neu: `Vorce-Factory/test/Test-MainRunResume.ps1`
+
+Teilaufgaben:
+
+NA-12.1 - Resume-Einstieg
+- `Vorce-Factory.ps1` und Orchestrator erhalten `-ResumeRunId`.
+- Suche vor neuem Scheduling nach `waiting_provider` oder verwaistem `running`.
+- `retry_after` und manuelle Pause beachten.
+- Resume behaelt dieselbe MAIN-ID.
+
+NA-12.2 - Execution Graph
+- Speichere den Vertrag aus Prompt 6C.
+- Jeder PART-Eintrag enthaelt Fingerprint, Dependency-Result-IDs, Result-Ref, Reusable und Attempts.
+
+NA-12.3 - Reuse-Pruefung
+- `Get-VorceReusableRunResult` muss pruefen:
+  - gleiche MAIN-ID
+  - gleicher Runname
+  - gleicher Fingerprint
+  - gleiche Dependency-Result-IDs
+  - `reusable=true`
+  - Status completed/reused
+  - Result-Artefakt existiert
+- Nutze den aktuell ignorierten Parameter `DependencyResultIds`.
+
+NA-12.4 - Fingerprints
+- Kanonische fachliche Inputs.
+- Keine Timestamps oder Provider-IDs.
+- Prompt-Version und Abhaengigkeitsergebnisse einbeziehen, wenn fachlich relevant.
+
+NA-12.5 - waiting_provider
+- RunEngine darf diesen Status nicht als completed speichern.
+- SUB und MAIN bleiben ebenfalls `waiting_provider`.
+- Naechster Attempt setzt bei noch nicht versuchtem Provider oder naechstem Chain-Zyklus fort.
+
+NA-12.6 - Rehydrierung
+- ParentState aus Result-Refs wiederherstellen.
+- Reused PART wird nicht ausgefuehrt, aber als `reused` aggregiert und geloggt.
+
+NA-12.7 - Idempotenz
+- Issue-Erstellung, Delegation, Kommentare und Config-Aenderungen erhalten Idempotency-Key.
+- Vor Side Effect nach bestehendem Resultat suchen.
+
+NA-12.8 - Tests
+- 3-Part-Fixture aus Prompt 6C.
+- Prozessneustart zwischen Provider-Attempts.
+- Geaenderter Fingerprint invalidiert betroffenen und abhaengige Parts.
+- Fehlendes Artefakt verhindert Reuse.
+- Side Effect wird genau einmal ausgefuehrt.
+
+Akzeptanzkriterien:
+- Fertige gueltige Parts laufen nach Fallback nicht erneut.
+- Derselbe MAIN-RUN wird nach Neustart fortgesetzt.
+- Keine doppelten externen Seiteneffekte.
+```
+
+Checkliste:
+
+- [ ] ResumeRunId implementiert.
+- [ ] Execution Graph gespeichert.
+- [ ] Dependency-aware Reuse.
+- [ ] waiting_provider durchgaengig.
+- [ ] Rehydrierung vorhanden.
+- [ ] Idempotency fuer Side Effects.
+- [ ] Resume-Tests bestehen.
+
+---
+
+### NA-13 - Punkt 7A: Provider-/CLI-Test-Suite
+
+Status: `[OFFEN]`
+
+```text
+Du bist Provider-Test-Agent. Erstelle die kostenfreie Standardtestsuite aus Prompt 7A.
+
+Betroffene Dateien:
+- neu: `Vorce-Factory/test/Test-LLMProviders.ps1`
+- `Vorce-Factory/test/Test-StartProcess.ps1`
+- FakeCLI-Fixtures unter `Vorce-Factory/test/fixtures/fake-cli`
+
+Teilaufgaben:
+- Modi `DiscoveryOnly`, `DryRun`, `FakeCli`, `Smoke`.
+- Smoke nur mit `-AllowPaidCalls`.
+- Alle Registry-Provider dynamisch genau einmal.
+- Jules als non_cli.
+- Test und Runner verwenden denselben Command-/Argument-Builder.
+- Entferne hardcodierte lokale Pfade aus `Test-StartProcess.ps1`.
+- FakeCLI deckt stdout, stderr, ExitCode, Timeout, Argument, stdin, Tempfile und Cleanup ab.
+- Enabled + nicht optional + Command fehlt ist Fehler.
+
+Akzeptanzkriterien:
+- Defaulttest ist kostenfrei.
+- Alle Provider erscheinen genau einmal.
+- Fehlende Tools und ungueltige Templates sind klar diagnostiziert.
+```
+
+Checkliste:
+
+- [ ] Neue Providersuite vorhanden.
+- [ ] Hardcodierter Gemini-Test entfernt/migriert.
+- [ ] FakeCLI deckt alle Transportarten ab.
+- [ ] Defaultmodus fuehrt keine echten Calls aus.
+
+---
+
+### NA-14 - Punkt 7B: Direkte CLI-Aufrufe und Command-Injection beseitigen
+
+Status: `[OFFEN]`
+
+```text
+Du bist CLI-Sicherheits-Agent. Klassifiziere und migriere direkte Prozessaufrufe im aktiven Vorce-Factory-Scope.
+
+Pflichttreffer:
+- `Vorce-Factory/web/Dashboard/vite.config.ts`
+- `CreateDelegations.ps1`
+- `DispatchReviews.ps1`
+- `RefillJulesQueue.ps1`
+- `CheckAndDoing-Router.ps1`
+- `GitHubClient.ps1`
+- `ProjectManager.ps1`
+
+Teilaufgaben:
+- Node verwendet `spawnSync`/`execFileSync` mit Argumentarray, nie `execSync` mit interpoliertem String.
+- Issue-Titel, Body, Repo, Labels und Usertext duerfen nie Teil eines Shellstrings sein.
+- PowerShell-GitHub-Aufrufe laufen ueber einen zentralen Helper mit Argumentarray, ExitCode, stdout, stderr und Timeout.
+- Entferne zusammengebaute `$ghCommand`-Strings.
+- LLM-Aufrufe laufen nur ueber AgentRunner.
+- Bootstrap-`Start-Process` bleibt nur als klassifizierter `allowed_bootstrap`.
+- Erstelle Audit-Tabelle Datei/Zeile/Klassifikation/Fix.
+
+Tests:
+- Titel und Body mit Quotes, Newlines, Semikolon, `&`, `$()` und Backticks.
+- Belege, dass diese Werte als einzelne Argumente ankommen.
+- Fehlendes `gh`, Authfehler und Timeout.
+
+Akzeptanzkriterien:
+- Keine offenen `must_migrate`-Treffer.
+- Kein GitHub-Command wird aus Usertext als Shellstring gebaut.
+```
+
+Checkliste:
+
+- [ ] Node-`execSync`-Shellstrings entfernt.
+- [ ] Zentraler GitHub-Helper genutzt.
+- [ ] Injection-Fixtures bestehen.
+- [ ] Audit-Tabelle dokumentiert.
+
+---
+
+### NA-15 - Punkt 5C: Run-Summary mit echten Daten
+
+Status: `[OFFEN]`
+
+```text
+Du bist Run-Summary-Agent. Ersetze Platzhalterwerte durch echte Aggregation aus Run-History und Attempts.
+
+Betroffene Dateien:
+- `Vorce-Factory/src/lib/state/StateManager.ps1`
+- `Vorce-Factory/web/Dashboard/vite.config.ts`
+- `Vorce-Factory/web/Dashboard/src/types.ts`
+- `Vorce-Factory/web/Dashboard/src/pages/DashboardPage.tsx`
+- `Vorce-Factory/test/Test-RunSummary.ps1`
+- neue API-Fixtures
+
+Ist-Problem:
+`provider_attempts`, `fallbacks`, Kosten und Tokens sind fest auf `0` gesetzt. Der PowerShell-Helper liefert leere 24h-/7d-Statistiken.
+
+Teilaufgaben:
+- Definiere eine einzige fachliche Aggregationslogik oder identische getestete Vertrage fuer PowerShell und Node.
+- Zaehle PARTs aus Schema-2-History bzw. referenzierten SUB/PART-States.
+- Zaehle Provider-Attempts, Fallbackwechsel, Timeouts, RateLimits und Authfehler.
+- Summiere Tokens und Kosten nur aus vorhandenen Providerdaten.
+- Zaehle ResumeCount, reused und no_work.
+- PrimaryError aus strukturiertem Fehlerfeld, nicht per beliebiger Stringsuche.
+- Result-Summary maximal 160 Zeichen.
+- Limit auf sinnvollen Bereich begrenzen, z.B. 1 bis 100.
+- Bei leerer History valides leeres Objekt.
+
+Tests:
+- completed, failed, waiting_provider, resumed, reused, no_work.
+- Ein Run mit zwei Provider-Attempts und einem Fallback.
+- 24h- und 7d-Grenzen.
+- P95 mit deterministischem Fixture.
+
+Akzeptanzkriterien:
+- Keine Pflichtmetrik ist hartcodiert.
+- Dashboard zeigt reale Fallback-/Reuse-/Resume-Werte.
+```
+
+Checkliste:
+
+- [ ] Echte Attempt-/Fallback-Zaehlung.
+- [ ] Echte Token-/Kostenaggregation.
+- [ ] 24h-/7d-Werte vollstaendig.
+- [ ] Resume/no_work/reused sichtbar.
+- [ ] Summary-Fixtures bestehen.
+
+---
+
+### NA-16 - Dashboard Typecheck, Lint und Hierarchie-UX abschliessen
+
+Status: `[OFFEN]`
+
+```text
+Du bist Dashboard-Qualitaets-Agent. Behebe die aktuell 18 reproduzierten ESLint-Fehler und fuehre einen echten Typecheck ein.
+
+Betroffene Dateien:
+- `Vorce-Factory/web/Dashboard/package.json`
+- neu oder bestehend: `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`
+- `src/App.tsx`
+- `src/components/SyncStatus.tsx`
+- `src/hooks/useWebSocketEnhanced.ts`
+- `src/pages/DashboardPage.tsx`
+- `src/components/LiveLogMonitor.tsx`
+- `src/types.ts`
+
+Teilaufgaben:
+- Fuege Script `typecheck` mit `tsc --noEmit` oder Projekt-Build hinzu.
+- Entferne ungenutzte Imports, States, Callbackvariablen und tote Funktionen.
+- Umschliesse lexikalische Deklarationen in `switch`-Cases korrekt.
+- Entferne ungenutztes `LiveLogPanel`.
+- Entferne `LiveLogMonitor.tsx`, wenn keine andere Seite die Komponente nutzt.
+- `/live-log.json` darf nur bleiben, wenn technische Diagnose es nachweislich nutzt; keine UI-Abhaengigkeit.
+- Ersetze `any` in neuen Run-Hierarchy-/Run-Summary-Vertraegen.
+- JSON-Button muss echte Details anzeigen oder einen sicheren API-Link oeffnen; kein `alert()`-Platzhalter.
+- Main-Knoten muessen trotz Toggle wirklich ein-/ausklappbar sein. Kein dauerhaftes `forceOpen=true`, das Collapse verhindert.
+
+Tests:
+- `npm run typecheck`
+- `npm run lint`
+- `npm run build`
+- optional Komponenten-/Fixture-Test fuer leere Hierarchie und 5/17/18-Hierarchie.
+
+Akzeptanzkriterien:
+- Typecheck, Lint und Build bestehen ohne Fehler.
+- Keine tote Live-Log-UI bleibt.
+- Hierarchie-Interaktionen funktionieren entsprechend 1B.
+```
+
+Checkliste:
+
+- [ ] Typecheck konfiguriert.
+- [ ] Alle Lintfehler behoben.
+- [ ] Tote Live-Log-Komponenten entfernt.
+- [ ] JSON-Details ohne Alert-Platzhalter.
+- [ ] Expand/Collapse korrekt.
+- [ ] Typecheck, Lint und Build erfolgreich.
+
+---
+
+### NA-17 - Punkt 8B: Log-, Artefakt- und Backup-Retention
+
+Status: `[OFFEN]`
+
+```text
+Du bist Retention-Agent. Implementiere Prompt 8B erst nach Logging und Prozessregistry.
+
+Betroffene Dateien:
+- neu: `Vorce-Factory/src/lib/logging/LogMaintenance.ps1`
+- `Vorce-Factory/src/lib/logging/Write-Log.ps1`
+- `Vorce-Factory/Vorce-Factory.ps1`
+- `Vorce-Factory/Start-Vorce-Factory.ps1`
+- Housekeeping-PART-RUN
+- neu: `Vorce-Factory/test/Test-LogRetention.ps1`
+
+Teilaufgaben:
+- Implementiere alle Retention-Defaults aus Prompt 8B.
+- Aktive Session-/Prozessdateien anhand Prozessregistry schuetzen.
+- `-WhatIf`/DryRun.
+- Erlaubte Rootpfade explizit definieren und vor jeder rekursiven Aktion validieren.
+- Run-State, Run-History, DB und aktuelle Config nie loeschen.
+- JSONL nach zwei Tagen gzippen.
+- Fehlerlog groessenbasiert rotieren.
+- Erfolgreiche und fehlgeschlagene Agent-Artefakte unterschiedlich behandeln.
+- Cleanup als strukturiertes Event.
+
+Tests:
+- alte/neue/aktive Dateien.
+- ausserhalb Root.
+- DryRun.
+- gzip.
+- Fehlerlog-Generationen.
+
+Akzeptanzkriterien:
+- Wachstum ist begrenzt.
+- Aktive und fachliche Daten bleiben erhalten.
+```
+
+Checkliste:
+
+- [ ] Retention-Modul vorhanden.
+- [ ] Rootschutz und DryRun.
+- [ ] Aktive Dateien geschuetzt.
+- [ ] Gzip und Fehlerrotation.
+- [ ] Retention-Tests bestehen.
+
+---
+
+### NA-18 - Punkt 3: Sichtbare Rename-Restarbeiten und Kompatibilitaet
+
+Status: `[OFFEN]`
+
+```text
+Du bist Rename-Abschluss-Agent. Bereinige nur sichtbare aktive Produktbezeichnungen und dokumentiere technische Ausnahmen.
+
+Bekannte aktive Treffer:
+- sichtbare Meldungen in `Start-Vorce-Factory.ps1`
+- Meldung `Autopilot config saved` in Dashboard-API
+- Fehlermeldung in `SettingsPage.tsx`
+- aktive Dokumentation unter `Vorce-Factory/docs/Documentations`
+- aktive Prompttexte unter `Vorce-Factory/var/prompts`
+
+Regeln:
+- Technische Identifier wie `autopilot.ps1`, `autopilot-config.json`, Label `autopilot-created` und Wakeup-Datei nur mit Kompatibilitaetsstrategie umbenennen.
+- Archive duerfen historische Namen behalten.
+- Kommentare sind nur dann Pflicht, wenn sie sichtbare oder fachlich aktive Bezeichnung enthalten.
+
+Teilaufgaben:
+- Klassifiziere alle Treffer als visible_branding, technical_identifier, historical_doc oder compatibility_alias.
+- Ersetze visible_branding durch Vorce-Factory.
+- Aktualisiere aktive Start-/Dashboard-Dokumentation.
+- Dokumentiere verbleibende technische Treffer mit Grund.
+- Teste Startpfade, Boot, DryRun und Dashboard.
+
+Akzeptanzkriterien:
+- Keine alte sichtbare Produktbezeichnung in aktiver UI, Startausgabe oder aktiver Dokumentation.
+- Technische Kompatibilitaet bleibt erhalten.
+```
+
+Checkliste:
+
+- [ ] Aktive Treffer klassifiziert.
+- [ ] Sichtbares Branding bereinigt.
+- [ ] Technische Ausnahmen dokumentiert.
+- [ ] Start-/Build-Regressionstests bestanden.
+
+---
+
+### NA-19 - Punkt 9A bis 9C: Optimizer in 5 SUB- und 12 PART-RUNs aufteilen
+
+Status: `[OFFEN]`
+
+```text
+Du bist Optimizer-Implementierungs-Agent. Setze die Zieltopologie aus Punkt 9 fuer MAIN-RUN-04 exakt um.
+
+Voraussetzungen:
+- NA-03 bis NA-15 sind abgeschlossen.
+- Run-History, Router-Conditions, Fallback und Reuse funktionieren.
+
+Teilaufgaben:
+
+NA-19.1 - PerformanceDataCollection
+- Ersetze den grossen Part durch CollectRunMetrics, CollectProviderAndFallbackMetrics und BuildMetricsSnapshot.
+- Alle drei lokal und deterministisch.
+- Snapshot mit sample_count und data_quality.
+
+NA-19.2 - SystemAnalysis
+- DetectRunBottlenecks.
+- DetectRoutingAndPromptWaste.
+- Nur Findings, keine direkten Aenderungen.
+
+NA-19.3 - ProposalGeneration
+- BuildCandidateProposals lokal.
+- RefineTopProposalsWithLLM fuer maximal drei Kandidaten.
+- Kein Kandidat -> skipped=no_candidates.
+
+NA-19.4 - ApprovedChangeDispatch
+- ValidateApprovedChanges.
+- ApplyLowRiskConfigChanges nur fuer Whitelist.
+- CreateIssuesForCodeChanges fuer Code, Prompt und High-Risk.
+
+NA-19.5 - ChangeEvaluation
+- CompareBeforeAfterMetrics.
+- ClassifyChangeOutcome.
+- Beobachtungsfenster und kontrollierter Rollback.
+
+NA-19.6 - Regelwerk
+- `var/config/optimizer-rules.json`.
+- Alle Pflicht-Regel-IDs und Guardrails aus 9C.
+
+NA-19.7 - Router und Tests
+- Conditions aus 9B.
+- Leere SUB-RUNs nicht starten.
+- Reuse/Fingerprints pro PART.
+- Tests fuer Regeln, Deduplizierung, Guardrails, no_candidates und insufficient_data.
+
+NA-19.8 - Topologie-Manifest
+- Noch nicht auf Zwischenwerte umstellen.
+- Erst gemeinsam mit NA-20 final auf 5 MAIN / 24 SUB / 36 PART aktualisieren.
+
+Akzeptanzkriterien:
+- MAIN-RUN-04 besitzt exakt 5 SUB- und 12 PART-RUNs.
+- Standardmaessig nur ein LLM-Part.
+- Kein Auto-Apply fuer Code, Prompt oder Routerdeaktivierung.
+```
+
+Checkliste:
+
+- [ ] Optimizer 5 SUB / 12 PART.
+- [ ] Metrics-Snapshot.
+- [ ] Findings und Proposals getrennt.
+- [ ] Guardrails und Regel-IDs.
+- [ ] Routerbedingungen.
+- [ ] Optimizer-Tests bestehen.
+
+---
+
+### NA-20 - Punkt 9D bis 9F: MemoryOptimization in 5 SUB- und 9 PART-RUNs aufteilen
+
+Status: `[OFFEN]`
+
+```text
+Du bist MemoryOptimization-Agent. Setze die Zieltopologie aus Punkt 9 exakt um.
+
+Betroffene Bereiche:
+- `MAIN-RUN-05_MemoryOptimization`
+- neu: `src/lib/utils/MemoryManager.ps1`
+- `src/lib/utils/PromptManager.ps1`
+- Memory-DB und Config
+- neue Tests fuer Selection und Maintenance
+
+Teilaufgaben:
+
+NA-20.1 - MemoryInventory
+- LoadAndNormalizeMemories.
+- DetectExpiredDuplicateAndInvalidMemories.
+- Analyse ohne Loeschen.
+
+NA-20.2 - MemorySelectionPolicy
+- ScoreMemoryRelevance.
+- ValidateMemoryBudgets.
+- Implementiere `Select-VorceRelevantMemories`.
+- Defaults 3 Memories / 500 Tokens.
+- Default ist keine Memory.
+
+NA-20.3 - MemoryMaintenance
+- BuildMaintenancePlan.
+- ApplyApprovedMaintenance.
+- Backup und before/after Hash.
+- Permanent/User-Memory niemals automatisch loeschen.
+
+NA-20.4 - MasterIssueContext
+- SyncIssueRelationships lokal.
+- UpdateChangedMasterIssueSummaries nur bei Hashaenderung.
+- Maximal ein bedingter LLM-Call pro geaendertem Master-Issue.
+
+NA-20.5 - Reporting
+- BuildMemoryUsageStatistics lokal.
+
+NA-20.6 - Router, Reuse und Tests
+- Conditions aus Punkt 9.
+- Jeder PART eigener Fingerprint.
+- Tests fuer Auswahlreihenfolge, Tokenbudget, keine Memory, TTL, Duplicate, Plan/Apply und unveraenderten Master-Kontext.
+
+NA-20.7 - Finale Topologie
+- Nach NA-19 und NA-20 das Manifest aus NA-03 auf exakt 5 MAIN / 24 SUB / 36 PART aktualisieren.
+- Alte 5/17/18-Abnahme gilt danach nicht mehr.
+
+Akzeptanzkriterien:
+- MAIN-RUN-05 besitzt exakt 5 SUB- und 9 PART-RUNs.
+- Standardmaessig nur ein bedingter LLM-Part.
+- Auswahl und Maintenance sind deterministisch und budgetiert.
+- Gesamttopologie ist exakt 5/24/36.
+```
+
+Checkliste:
+
+- [ ] MemoryOptimization 5 SUB / 9 PART.
+- [ ] MemoryManager und Auswahlfunktion.
+- [ ] Plan/Apply getrennt.
+- [ ] Master-Issue-Delta-Logik.
+- [ ] Reporting.
+- [ ] Memory-Tests bestehen.
+- [ ] Topologie final 5/24/36.
+
+---
+
+### NA-21 - Punkt 9G: Optimizer-, Memory- und Run-Dashboard
+
+Status: `[OFFEN]`
+
+```text
+Du bist Dashboard-Fachfunktions-Agent. Implementiere Punkt 9G nach Abschluss der Backend-Auftraege.
+
+Betroffene Dateien:
+- DashboardPage
+- SettingsPage
+- MemoryPanel
+- types
+- Vite-API
+- Dashboard-State, Memory-DB und Optimizer-Change-Log
+
+Teilaufgaben:
+- Optimizer-Proposals mit Rule-ID, Evidence, Samples, Risiko, Wirkung und Rollback.
+- Erlaubte Aktionen approve, reject, defer, create_issue.
+- High-Risk approve erstellt nur Issue.
+- Applied Changes mit Beobachtungsfenster und Outcome.
+- Memory-Tabelle mit Typ, Status, Scope, Ablauf, Nutzung und Score.
+- Maintenance-Aktionen serverseitig gegen erlaubte Statusuebergaenge validieren.
+- Permanent setzen nur nach expliziter User-Aktion.
+- Settings fuer Observation Window, Memory-Budget und Router.
+- Run-Summary zeigt Fallbacks, ResumeCount und reused PARTs.
+- Atomare Writes, Backups und keine User-Dateipfade.
+
+Tests:
+- API-Negativtests fuer ungueltige Aktion und Statusuebergang.
+- UI-Fixtures fuer leere und gefuellte Daten.
+- Typecheck, Lint, Build.
+
+Akzeptanzkriterien:
+- User kann Evidence und Risiko nachvollziehen.
+- Keine High-Risk-Aenderung wird automatisch angewendet.
+- Keine Rohlogs im Dashboard.
+```
+
+Checkliste:
+
+- [ ] Optimizer-Ansicht.
+- [ ] Memory-Ansicht.
+- [ ] Sichere Aktionen.
+- [ ] Settings.
+- [ ] Run-Statistik.
+- [ ] Dashboard-Tests und Build.
+
+---
+
+### NA-22 - Startskript nur fuer Dashboard-Basis und manuelles Systemmenue
+
+Status: `[OFFEN]`
+
+```text
+Du bist Bootstrap- und Bedienungs-Agent fuer Vorce-Factory. Erweitere das Startskript um ein einfaches Konsolenmenue. Eine Windows-Tray-Anwendung oder GUI ist fuer diesen Auftrag nicht erforderlich. Das Konsolenmenue ist die bevorzugte Loesung, weil es ohne neue Abhaengigkeiten unter Windows PowerShell und PowerShell 7 funktioniert.
+
+Zielverhalten:
+
+1. Der normale Aufruf von `Start-Vorce-Factory.ps1` startet oder prueft nur die Dashboard-Basis.
+2. Die Dashboard-Basis besteht aus:
+   - Vite-Dashboard auf Port 5173.
+   - Sync-/WebSocket-Dienst auf Port 5174 nur dann, wenn das Dashboard ihn weiterhin fuer Aktualisierungen benoetigt.
+3. Der normale Start darf keinen Factory-Loop, keinen MAIN-RUN, keinen SUB-RUN und keinen PART-RUN automatisch starten.
+4. Der normale Start darf nicht mehr vorsorglich alle vorhandenen Vorce-Factory-Prozesse beenden.
+5. Nach erfolgreichem Dashboard-Healthcheck erscheint ein einfaches Menue:
+   - `[1] Vorce-Factory Runs starten`
+   - `[2] Alle Vorce-Factory Prozesse beenden`
+   - `[S] Status aktualisieren`
+   - `[Q] Menue verlassen, laufende Prozesse behalten`
+6. Menuepunkt 1 startet die Run-Verarbeitung bewusst und garantiert als ersten MAIN-RUN genau einmal `MAIN-RUN-01_Planning`.
+7. Menuepunkt 2 beendet Dashboard, Sync, Factory-Loop und alle zu diesem Factory-Loop gehoerenden Run-Kindprozesse sicher und PID-basiert.
+8. Der User kann das Dashboard nach dem normalen Start zuerst oeffnen und Konfigurationen aendern, bevor Menuepunkt 1 verwendet wird.
+
+Betroffene Dateien:
+- `Vorce-Factory/Start-Vorce-Factory.ps1`
+- `Vorce-Factory/Vorce-Factory.ps1`
+- `Vorce-Factory/src/orchestrator/Vorce-Orchestrator.ps1`
+- Prozessregistry und Helper aus `NA-07`
+- `Vorce-Factory/src/lib/logging/Write-Log.ps1`
+- neu: `Vorce-Factory/test/Test-StartMenu.ps1`
+- aktive Startdokumentation unter `Vorce-Factory/docs/Documentations`
+
+Verbindliche Kommandooberflaeche:
+
+- `.\Start-Vorce-Factory.ps1`
+  - startet Dashboard-Basis;
+  - wartet auf Health;
+  - zeigt danach das interaktive Menue;
+  - startet keine Runs ohne Auswahl `1`.
+- `.\Start-Vorce-Factory.ps1 -DashboardOnly -Detach`
+  - startet nur Dashboard-Basis und beendet das Startskript nach erfolgreichem Healthcheck;
+  - startet keine Runs.
+- `.\Start-Vorce-Factory.ps1 -StartRuns -Detach`
+  - stellt zuerst die Dashboard-Basis sicher;
+  - startet danach genau einen Factory-Loop mit initialem Planning;
+  - beendet das Startskript nach erfolgreicher Prozessregistrierung.
+- `.\Start-Vorce-Factory.ps1 -StopAll`
+  - beendet alle verifizierten Vorce-Factory-Prozesse;
+  - startet vorher keine neuen Prozesse.
+- `.\Start-Vorce-Factory.ps1 -Status`
+  - zeigt Prozessregistry, PID, Health, Laufzeit und Logpfade;
+  - veraendert keinen Prozess.
+
+Rueckwaertskompatibilitaet:
+
+- Bestehende Schalter wie `-NoDashboard`, `-NoSync`, `-NoAutopilot`, `-Stop`, `-Restart`, `-StopScripts` und `-StopAll` zuerst inventarisieren.
+- Dokumentiere fuer jeden Schalter: beibehalten, als Alias abbilden oder mit klarer Fehlermeldung als deprecated markieren.
+- `-NoAutopilot` darf fuer eine Uebergangszeit Alias von `-DashboardOnly` sein.
+- `-Stop` und `-StopAll` duerfen auf dieselbe sichere PID-basierte Stopfunktion abgebildet werden.
+- Keine stillen Bedeutungswechsel ohne Dokumentation.
+
+Teilaufgaben:
+
+NA-22.1 - Top-Level-Ablauf refaktorieren
+- Teile das Startskript in klar testbare Funktionen:
+  - `Start-VorceDashboardBase`
+  - `Start-VorceRunLoop`
+  - `Stop-VorceManagedProcesses`
+  - `Get-VorceProcessStatus`
+  - `Show-VorceStartMenu`
+  - `Invoke-VorceMenuSelection`
+- Das Skript darf bei normalem Start nicht mehr bedingungslos `Stop-VorceInfrastructure` aufrufen.
+- Bereits gesunde, verifizierte Dashboard-Prozesse werden weiterverwendet.
+- Veraltete Registry-Eintraege duerfen bereinigt werden, ohne einen fremden Prozess zu beenden.
+
+NA-22.2 - Dashboard-Basis eindeutig definieren
+- Starte Vite nur, wenn kein gesunder registrierter Dashboard-Prozess vorhanden ist.
+- Starte Sync nur, wenn der Dienst fuer Dashboard-Aktualisierung konfiguriert/erforderlich ist.
+- Kein Aufruf von `autopilot.ps1`, `Vorce-Factory.ps1` oder Orchestrator im Dashboard-Basis-Pfad.
+- Nach Health-Erfolg Dashboard-URL, PID, Port und Logpfade anzeigen.
+- Bei Dashboard-Startfehler keinen Run-Start anbieten.
+
+NA-22.3 - Menue implementieren
+- Nutze `Read-Host` oder `[Console]::ReadKey`, ohne externe Module.
+- Akzeptiere `1`, `2`, `S/s`, `Q/q`.
+- Ungueltige Eingabe zeigt eine kurze Meldung und das Menue erneut.
+- Menuepunkt 1 kehrt nach erfolgreichem Hintergrundstart zum Menue zurueck und zeigt den neuen Status.
+- Menuepunkt 2 bestaetigt die Aktion einmal, ausser das Skript wurde explizit mit `-StopAll` aufgerufen.
+- Menuepunkt Q beendet nur das Menue und laesst Prozesse unveraendert.
+- Kein endloses Menue bei nichtinteraktivem Host oder `-Detach`.
+
+NA-22.4 - Run-Start mit initialem Planning
+- Implementiere in `Vorce-Factory.ps1` einen eindeutigen Schalter, bevorzugt `-InitialPlanning`.
+- Beim Start des Factory-Loops mit `-InitialPlanning`:
+  1. `MAIN-RUN-01_Planning` genau einmal erzwingen.
+  2. Erst nach dessen finalem Status in den normalen Scheduler-/Intervall-Loop wechseln.
+  3. Bei `waiting_provider` nicht zusaetzlich einen neuen normalen MAIN-RUN starten; Resume-Regeln aus NA-12 beachten.
+  4. Bei finalem Planning-Fehler den Fehler sichtbar loggen. Ob der Loop danach weiterlaeuft, muss ueber eine dokumentierte Configoption entschieden werden; Default ist kein stilles Weiterlaufen.
+- Vermeide die mehrdeutige alte `-StartupSequence`, die zusaetzlich automatisch CheckAndDoing startet. Entweder:
+  - auf `-InitialPlanning` migrieren, oder
+  - als dokumentierten Alias beibehalten, dessen neues Verhalten nur initiales Planning ist.
+- Der Factory-Loop wird als registrierter Hintergrundprozess gestartet.
+- Eine zweite Auswahl von Menuepunkt 1 darf keinen zweiten Factory-Loop starten.
+- Wenn bereits ein gesunder Factory-Loop laeuft, Status anzeigen und keine neue Planning-Session erzwingen.
+
+NA-22.5 - Sicheres Beenden aller Vorce-Factory-Prozesse
+- Verwende ausschliesslich die Prozessregistry aus NA-07 als Primaerquelle.
+- Stoppreihenfolge:
+  1. Factory-Loop fuer kontrolliertes Beenden signalisieren.
+  2. Zugehoerige SUB-/PART-/Provider-Kindprozesse beenden.
+  3. Sync-Dienst beenden.
+  4. Dashboard beenden.
+- Vor jedem Stop PID, CommandPath, WorkingDirectory und Parentbeziehung pruefen.
+- Fremde Prozesse auf Port 5173/5174 nicht allein wegen der Portnummer beenden.
+- System-PIDs und aktuelle aufrufende PowerShell nie beenden.
+- Registry nach erfolgreichem Stop atomar aktualisieren.
+- Teilfehler melden und mit nicht erfolgreichem ExitCode beenden, wenn registrierte Prozesse nicht gestoppt werden konnten.
+
+NA-22.6 - Statusanzeige
+- Zeige mindestens:
+  - Komponente
+  - Status `healthy|starting|degraded|stopped`
+  - PID
+  - Port
+  - StartedAt/Laufzeit
+  - Health-URL
+  - stdout-/stderr-Pfad
+- Zeige getrennt:
+  - `Dashboard bereit`
+  - `Runs nicht gestartet`
+  - `Factory-Loop aktiv`
+  - `Planning laeuft/wartet/abgeschlossen`, soweit State vorhanden.
+- Keine Secrets oder komplette CommandLine ausgeben.
+
+NA-22.7 - Logging
+- Schreibe strukturierte Events:
+  - `dashboard_base_started`
+  - `dashboard_base_reused`
+  - `menu_opened`
+  - `run_start_requested`
+  - `initial_planning_started`
+  - `factory_loop_started`
+  - `duplicate_run_start_ignored`
+  - `stop_all_requested`
+  - `managed_process_stopped`
+- Verwende dieselbe `session_id` fuer den Bootstrap-Vorgang.
+- Der Factory-Loop erzeugt seine eigene Prozess-Session und behält Run-Korrelationen gemaess NA-06.
+
+NA-22.8 - Tests ohne echte Langlaeufer
+- `Test-StartMenu.ps1` verwendet Mock-/Fixture-Prozessstarter und temporaere Registry.
+- Teste:
+  1. Defaultpfad startet Dashboard und optional Sync, aber keinen Factory-Loop.
+  2. Defaultpfad ruft keine Stop-All-Funktion auf.
+  3. Auswahl `1` startet genau einen Factory-Loop.
+  4. Factory-Loop-Argumente enthalten `-InitialPlanning`.
+  5. Auswahl `1` ein zweites Mal startet keinen Duplikatprozess.
+  6. Initial Planning wird genau einmal angefordert.
+  7. Auswahl `2` stoppt alle registrierten Vorce-Komponenten in definierter Reihenfolge.
+  8. Fremde PID und CommandPath-Mismatch bleiben unangetastet.
+  9. Auswahl `Q` beendet nur das Menue.
+  10. `-DashboardOnly -Detach`, `-StartRuns -Detach`, `-StopAll` und `-Status` warten nicht auf Eingabe.
+- Fuer Menue-Tests Eingabeleser als injizierbare Funktion/ScriptBlock gestalten; keine echte Tastatureingabe im Test.
+
+NA-22.9 - Manueller Smoke-Test
+- Ausgangslage ohne laufende Vorce-Prozesse.
+- `.\Start-Vorce-Factory.ps1` ausfuehren.
+- Belegen:
+  - Dashboard ist erreichbar.
+  - Kein MAIN-/SUB-/PART-Run wurde gestartet.
+  - Konfiguration kann im Dashboard geoeffnet und gespeichert werden.
+- Danach Menuepunkt `1`:
+  - genau ein Factory-Loop laeuft.
+  - erster MAIN-State gehoert zu `MAIN-RUN-01_Planning`.
+- Danach Menuepunkt `2`:
+  - alle registrierten Vorce-Prozesse sind beendet.
+  - ein bewusst gestarteter fremder Testprozess bleibt aktiv.
+
+NA-22.10 - Dokumentation
+- Aktualisiere die aktive Startdokumentation mit:
+  - Standardablauf Dashboard zuerst.
+  - Menueoptionen.
+  - nichtinteraktive Schalter.
+  - Bedeutung von Initial Planning.
+  - sichere Stoplogik.
+- Entferne Aussagen, nach denen der normale Start automatisch alle Runs oder den kompletten Factory-Loop startet.
+
+Akzeptanzkriterien:
+- Normaler Start stellt nur Dashboard-Zugriff her.
+- Vor Auswahl `1` wird kein Run gestartet.
+- Auswahl `1` startet genau einen Factory-Loop und fuehrt Planning als ersten MAIN-RUN genau einmal aus.
+- Auswahl `2` beendet alle und nur die verwalteten Vorce-Factory-Prozesse.
+- Dashboard-Konfiguration kann vor Run-Start angepasst werden.
+- Interaktiver und nichtinteraktiver Betrieb sind eindeutig und getestet.
+- `Test-StartMenu.ps1`, `Test-ProcessSupervisor.ps1`, `Test-Boot.ps1` und der PowerShell-Parser-Test bestehen.
+```
+
+Checkliste:
+
+- [ ] Standardstart startet nur Dashboard-Basis.
+- [ ] Kein automatisches Stop-All beim Standardstart.
+- [ ] Konsolenmenue mit `1`, `2`, `S`, `Q`.
+- [ ] Nichtinteraktive Schalter vorhanden.
+- [ ] Initial Planning genau einmal vor normalem Loop.
+- [ ] Doppelter Factory-Loop verhindert.
+- [ ] Stop-All PID-basiert und fremdprozesssicher.
+- [ ] Statusanzeige und strukturierte Events vorhanden.
+- [ ] Automatisierte Menue-/Shortcut-Tests bestehen.
+- [ ] Manueller Smoke-Test dokumentiert.
+- [ ] Aktive Startdokumentation aktualisiert.
+
+---
+
+### NA-23 - Vollstaendige End-to-End-Abnahme aller Planpunkte
+
+Status: `[OFFEN]`
+
+```text
+Du bist der abschliessende Abnahme-Agent. Aendere keine Fachlogik, bevor ein reproduzierbarer Fehler nachgewiesen ist. Deine Aufgabe ist, alle Punkte 1 bis 9 gegen den aktuellen Code und die Nacharbeitsauftraege abzunehmen.
+
+Pflichtpruefungen:
+
+1. PowerShell-Syntax:
+   - alle aktiven `.ps1` Dateien parsebar.
+2. Topologie:
+   - nach Punkt 9 exakt 5 MAIN / 24 SUB / 36 PART.
+3. Router:
+   - alle Conditions, Reasons und Scripts getestet.
+4. State:
+   - Schema 2, Parent-IDs, Latest/History, Zusatzfelder.
+5. Logging:
+   - Lebenszyklus, Redaction, Parallelitaet.
+6. Prozesse:
+   - Registry, Health, Stop-Sicherheit, Crashdiagnose.
+7. Provider:
+   - Discovery, DryRun, FakeCLI, Output-Validation.
+8. Resume:
+   - Prozessneustart, Reuse, Invalidation, Idempotenz.
+9. Summary:
+   - echte Attempts, Fallbacks, Tokens, Kosten, reused, resume_count.
+10. Dashboard:
+   - Typecheck, Lint, Build und API-Fixtures.
+11. Retention:
+   - DryRun, aktive Dateien, Rootschutz.
+12. Rename:
+   - keine sichtbaren aktiven Altbezeichnungen.
+13. Startskript und Bedienung:
+   - Standardstart startet nur Dashboard-Basis.
+   - Kein Run startet vor expliziter Auswahl oder `-StartRuns`.
+   - Initial Planning laeuft genau einmal als erster MAIN-RUN.
+   - Stop-All beendet keine fremden Prozesse.
+
+Pflichtbefehle:
+- alle `Vorce-Factory/test/Test-*.ps1` einzeln mit ExitCode-Auswertung
+- `npm run typecheck`
+- `npm run lint`
+- `npm run build`
+- automatisierter Endpoint-Test fuer `/run-hierarchy.json`
+- automatisierter Endpoint-Test fuer `/run-summary.json`
+- `Test-StartMenu.ps1`
+
+Abschlussbericht:
+- Tabelle pro Punkt/Prompt mit `ERLEDIGT|TEILWEISE|OFFEN`.
+- Fuer ERLEDIGT konkrete Testdatei und Ergebnis nennen.
+- Fuer offene Punkte konkrete Datei/Zeile und reproduzierbaren Fehler nennen.
+- Den Status in diesem Plan aktualisieren.
+
+Akzeptanzkriterien:
+- Keine Pflichtpruefung fehlt.
+- Kein Test meldet PASS bei ExitCode 1 oder FAIL bei ExitCode 0.
+- Der Plan entspricht dem tatsaechlichen Implementierungsstand.
+```
+
+Checkliste:
+
+- [ ] Alle PowerShell-Tests erfolgreich.
+- [ ] Typecheck erfolgreich.
+- [ ] Lint erfolgreich.
+- [ ] Dashboard-Build erfolgreich.
+- [ ] Topologie 5/24/36 erfolgreich.
+- [ ] Hierarchie- und Summary-API erfolgreich.
+- [ ] Resume-End-to-End erfolgreich.
+- [ ] Dashboard-Only-Standardstart und Menue erfolgreich.
+- [ ] Initial Planning genau einmal verifiziert.
+- [ ] Sicheres Stop-All mit Fremdprozess-Negativtest verifiziert.
+- [ ] Planstatus vollstaendig aktualisiert.
+
+### Nacharbeits-Gesamtstatus
+
+| Auftrag | Status | Abhaengigkeit |
+|---|---|---|
+| NA-01 Syntax-/Runtime-Blocker | `[ERLEDIGT]` | keine |
+| NA-02 Test-Harness | `[ERLEDIGT]` | NA-01 |
+| NA-03 Topologie/Hierarchie | `[ERLEDIGT]` | NA-02 |
+| NA-04 State-Schema | `[OFFEN]` | NA-01, NA-02 |
+| NA-05 Router/Config | `[OFFEN]` | NA-03, NA-04 |
+| NA-06 Logging-Core | `[OFFEN]` | NA-04 |
+| NA-07 Prozess-Supervisor | `[OFFEN]` | NA-06 |
+| NA-08 Provider-IDs | `[OFFEN]` | NA-01 |
+| NA-09 AgentRunner | `[OFFEN]` | NA-06, NA-08 |
+| NA-10 Result-Validation | `[OFFEN]` | NA-09 |
+| NA-11 Deliberation | `[OFFEN]` | NA-09, NA-10 |
+| NA-12 Resume/Reuse | `[OFFEN]` | NA-04, NA-05, NA-09, NA-11 |
+| NA-13 Provider-Tests | `[OFFEN]` | NA-09, NA-10 |
+| NA-14 CLI-Sicherheit | `[OFFEN]` | NA-09 |
+| NA-15 Run-Summary | `[OFFEN]` | NA-04, NA-06, NA-12 |
+| NA-16 Dashboard-Qualitaet | `[OFFEN]` | NA-03, NA-05, NA-15 |
+| NA-17 Retention | `[OFFEN]` | NA-06, NA-07 |
+| NA-18 Rename-Abschluss | `[OFFEN]` | NA-16 |
+| NA-19 Optimizer | `[OFFEN]` | NA-03 bis NA-16 |
+| NA-20 MemoryOptimization | `[OFFEN]` | NA-03 bis NA-16 |
+| NA-21 Fach-Dashboard | `[OFFEN]` | NA-19, NA-20 |
+| NA-22 Startskript-Menue | `[OFFEN]` | NA-06, NA-07, NA-12, NA-16 |
+| NA-23 End-to-End-Abnahme | `[OFFEN]` | NA-01 bis NA-22 |

@@ -12,6 +12,63 @@ function Get-VorceStringHash {
     }
 }
 
+function Test-VorceFinalStateObject {
+    param([Parameter(Mandatory)][object]$InputObject)
+
+    if ($null -eq $InputObject) {
+        return $false
+    }
+
+    $requiredProperties = @(
+        'schema_version',
+        'id',
+        'name',
+        'type',
+        'status'
+    )
+
+    $propertyNames = @($InputObject.PSObject.Properties.Name)
+    foreach ($propertyName in $requiredProperties) {
+        if ($propertyNames -notcontains $propertyName) {
+            return $false
+        }
+    }
+
+    return $true
+}
+
+function Convert-VorceJobOutputItem {
+    param([Parameter(Mandatory)][object]$InputObject)
+
+    if ($InputObject -is [System.Management.Automation.InformationRecord]) {
+        if ($InputObject.MessageData -is [string]) {
+            return [string]$InputObject.MessageData
+        }
+
+        if ($null -ne $InputObject.MessageData) {
+            return [string]$InputObject.MessageData
+        }
+    }
+
+    if ($InputObject -is [System.Management.Automation.HostInformationMessage]) {
+        return [string]$InputObject.Message
+    }
+
+    return [string]$InputObject
+}
+
+function New-VorceMissingFinalStateResult {
+    param([Parameter(Mandatory)][string]$JobName)
+
+    return [pscustomobject]@{
+        name = $JobName
+        type = 'PART'
+        status = 'failed'
+        error_class = 'missing_final_state'
+        error = 'missing_final_state'
+    }
+}
+
 function Invoke-VorcePartRun {
     param(
         [Parameter(Mandatory)][string]$PartName,
@@ -91,7 +148,8 @@ function Invoke-VorcePartRun {
         }
         # Speichern des Part-States
         $statePath = Join-Path $global:VarDir "run-states/PART_$($PartName).json"
-        $PartState | ConvertTo-Json -Depth 10 | Set-Content $statePath -Encoding UTF8
+        Ensure-VorceParentDirectory -Path $statePath
+        $PartState | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $statePath -Encoding UTF8
         Save-VorceRunState -State $PartState | Out-Null
     }
     
@@ -104,7 +162,8 @@ function Invoke-VorceSubRunParallel {
         [Parameter(Mandatory)][array]$PartRuns,
         [object]$ParentState = $null,
         [hashtable]$ConfigBag = @{},
-        [int]$MaxParallel = 3
+        [int]$MaxParallel = 3,
+        [scriptblock]$JobFactory = $null
     )
     
     $subSettings = $ConfigBag.Config.run_settings.sub_runs.($SubRunName)
@@ -123,67 +182,85 @@ function Invoke-VorceSubRunParallel {
     $queue = [System.Collections.Generic.Queue[object]]::new($PartRuns)
     $spinChars = @("|", "/", "-", "\")
     $spinIdx = 0
-    
+
+    if (-not $JobFactory) {
+        $JobFactory = {
+            param($part, $pConfigBag, $pParentState, $pLibDir, $pVarDir, $pRoot)
+            Start-Job -ScriptBlock {
+                param($pName, $pScript, $pLibDir, $pVarDir, $pRoot, $pConfigBag, $pParentState)
+                $global:VarDir = $pVarDir
+                $global:LibDir = $pLibDir
+                $global:VorceRoot = $pRoot
+                . (Join-Path $pLibDir "utils/StatusPrinter.ps1")
+                . (Join-Path $pLibDir "state/StateManager.ps1")
+                . (Join-Path $pLibDir "engines/RunEngine.ps1")
+                Invoke-VorcePartRun -PartName $pName -ScriptPath $pScript -ParentState $pParentState -Arguments @{ ConfigBag = $pConfigBag }
+            } -ArgumentList $part.name, $part.script, $pLibDir, $pVarDir, $pRoot, $pConfigBag, $pParentState -Name $part.name
+        }
+    }
+
     while ($queue.Count -gt 0 -or $activeJobs.Count -gt 0) {
         # 1. Fuelle Jobs auf, bis MaxParallel erreicht ist
         while ($activeJobs.Count -lt $MaxParallel -and $queue.Count -gt 0) {
             $part = $queue.Dequeue()
             Write-VorceStep -Message "Queue -> Job: $($part.name)" -Status "INFO"
-            
-            # Starte den Part-Run in einem Hintergrund-Job
-            $job = Start-Job -ScriptBlock {
-                param($pName, $pScript, $pLibDir, $pVarDir, $pRoot, $pConfigBag, $pParentState)
-                # Globale Variablen im Job-Kontext setzen
-                $global:VarDir = $pVarDir
-                $global:LibDir = $pLibDir
-                $global:VorceRoot = $pRoot
-                # Libs im Job-Kontext laden
-                . (Join-Path $pLibDir "utils/StatusPrinter.ps1")
-                . (Join-Path $pLibDir "state/StateManager.ps1")
-                . (Join-Path $pLibDir "engines/RunEngine.ps1")
-                Invoke-VorcePartRun -PartName $pName -ScriptPath $pScript -ParentState $pParentState -Arguments @{ ConfigBag = $pConfigBag }
-            } -ArgumentList $part.name, $part.script, $global:LibDir, $global:VarDir, $global:VorceRoot, $ConfigBag, $ParentState -Name $part.name
-            
+
+            $job = & $JobFactory $part $ConfigBag $ParentState $global:LibDir $global:VarDir $global:VorceRoot
+
             $activeJobs += $job
         }
         
-        # 2. Pruefe auf fertige Jobs und streame Output
+        # 2. Pruefe auf fertige Jobs und sammle Output erst nach Jobende genau einmal
         $stillActive = @()
         foreach ($job in $activeJobs) {
-            # Stream Output (Live)
-            $jobOutput = Receive-Job -Job $job
-            if ($jobOutput) {
-                foreach ($line in $jobOutput) {
-                    if ($line -is [System.Management.Automation.HostInformationMessage]) {
-                        Write-Host "    [$($job.Name)] $($line.Message)" -ForegroundColor Gray
-                    } else {
-                        Write-Host "    [$($job.Name)] $line" -ForegroundColor Gray
+            if ($job.State -eq "Running") {
+                $stillActive += $job
+                continue
+            }
+
+            $jobOutput = @()
+            try {
+                $jobOutput = @(Receive-Job -Job $job -ErrorAction SilentlyContinue)
+            } catch {
+                $jobOutput = @()
+            }
+
+            $finalState = $null
+            foreach ($item in $jobOutput) {
+                if ($null -eq $item) {
+                    continue
+                }
+                if (Test-VorceFinalStateObject -InputObject $item) {
+                    if (-not $finalState) {
+                        $finalState = $item
                     }
+                    continue
+                }
+
+                $rendered = Convert-VorceJobOutputItem -InputObject $item
+                if (-not [string]::IsNullOrWhiteSpace($rendered)) {
+                    Write-Host "    [$($job.Name)] $rendered" -ForegroundColor Gray
                 }
             }
 
-            if ($job.State -ne "Running") {
-                # Job ist fertig - hole finales Ergebnis (State Objekt)
-                $jobResult = Receive-Job -Job $job
-                # Falls Receive-Job im Job-Kontext das PartState Objekt zurueckgegeben hat
-                $stateObj = $jobResult | Where-Object { $_.PSObject.Properties.Name -contains "RunName" -or $_.PSObject.Properties.Name -contains "status" } | Select-Object -First 1
-                
-                if ($job.State -eq "Failed") {
-                    $errorMsg = if ($job.ChildJobs[0].JobStateInfo.Reason) { $job.ChildJobs[0].JobStateInfo.Reason.Message } else { "Unbekannter Fehler im Hintergrund-Job." }
-                    Write-VorceStep -Message "Job CRASHED: $($job.Name) - $errorMsg" -Status "ERROR"
-                    $completedResults += @{ name=$job.Name; status="failed"; error=$errorMsg }
-                } elseif ($stateObj) {
-                    $completedResults += $stateObj
-                    $statusIcon = if ($stateObj.status -eq "completed") { "OK" } else { "ERROR" }
-                    Write-VorceStep -Message "Job abgeschlossen: $($job.Name)" -Status $statusIcon
-                } else {
-                    Write-VorceStep -Message "Job abgeschlossen: $($job.Name) (Kein State-Objekt empfangen)" -Status "WARN"
-                    $completedResults += @{ name=$job.Name; status="completed" }
-                }
-                Remove-Job $job -Force
+            if ($finalState) {
+                $completedResults += $finalState
+                $statusIcon = if ($finalState.status -eq "completed") { "OK" } else { "ERROR" }
+                Write-VorceStep -Message "Job abgeschlossen: $($job.Name)" -Status $statusIcon
             } else {
-                $stillActive += $job
+                $errorMsg = if ($job.ChildJobs.Count -gt 0 -and $job.ChildJobs[0].JobStateInfo.Reason) { $job.ChildJobs[0].JobStateInfo.Reason.Message } else { "Kein finales State-Objekt empfangen." }
+                Write-VorceStep -Message "Job abgeschlossen: $($job.Name) (missing_final_state)" -Status "ERROR"
+                $completedResults += [pscustomobject]@{
+                    name = $job.Name
+                    type = 'PART'
+                    status = 'failed'
+                    error_class = 'missing_final_state'
+                    error = 'missing_final_state'
+                    job_error = $errorMsg
+                }
             }
+
+            Remove-Job $job -Force
         }
         $activeJobs = $stillActive
         
@@ -211,7 +288,8 @@ function Invoke-VorceSubRunParallel {
     
     # Speichere Sub-Run State vorab
     $statePath = Join-Path $global:VarDir "run-states/SUB_$($SubRunName).json"
-    $aggregatedData | ConvertTo-Json -Depth 10 | Set-Content $statePath -Encoding UTF8
+    Ensure-VorceParentDirectory -Path $statePath
+    $aggregatedData | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $statePath -Encoding UTF8
     Save-VorceRunState -State ([pscustomobject]@{
         schema_version = 2
         id = [guid]::NewGuid().ToString('N')
@@ -282,7 +360,8 @@ function Invoke-VorceSubRunSequential {
     }
 
     $statePath = Join-Path $global:VarDir "run-states/SUB_$($SubRunName).json"
-    $aggregatedData | ConvertTo-Json -Depth 20 | Set-Content $statePath -Encoding UTF8
+    Ensure-VorceParentDirectory -Path $statePath
+    $aggregatedData | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $statePath -Encoding UTF8
     Save-VorceRunState -State ([pscustomobject]@{
         schema_version = 2
         id = [guid]::NewGuid().ToString('N')

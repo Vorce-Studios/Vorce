@@ -1,6 +1,5 @@
 import { RefreshCw, Wifi, WifiOff, AlertCircle } from 'lucide-react';
 import { useWebSocketEnhanced } from '../hooks/useWebSocketEnhanced';
-import { useLiveLog } from '../hooks/useWebSocketEnhanced';
 
 interface SyncStatusProps {
   onManualRefresh?: () => void;
@@ -14,8 +13,6 @@ export function SyncStatus({ onManualRefresh }: SyncStatusProps) {
     unreadUpdatesCount,
     reconnect
   } = useWebSocketEnhanced();
-
-  const { connectionStatus: logConnectionStatus } = useLiveLog();
 
   const formatTimestamp = (timestamp: string | null) => {
     if (!timestamp) return 'N/A';

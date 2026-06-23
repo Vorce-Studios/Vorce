@@ -1,5 +1,5 @@
 import { Activity, AlertTriangle, CheckCircle, Clock, FileJson, Folder, FolderOpen } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { RunHierarchyData, RunHierarchyMain, RunHierarchyPart, RunHierarchySub } from '../types';
 
 type NodeKind = 'main' | 'sub' | 'part';
@@ -82,6 +82,19 @@ export function RunHierarchyView({
 }: RunHierarchyViewProps) {
   const [localExpandedNodes, setLocalExpandedNodes] = useState<Set<string>>(new Set());
 
+  useEffect(() => {
+    const nextExpanded = new Set<string>();
+    for (const main of runHierarchy?.main_runs || []) {
+      nextExpanded.add(main.name);
+      for (const sub of main.sub_runs) {
+        if (sub.router_active_last_run || sub.activation_reason === 'activated_in_last_run') {
+          nextExpanded.add(`${main.name}::${sub.name}`);
+        }
+      }
+    }
+    setLocalExpandedNodes(nextExpanded);
+  }, [runHierarchy]);
+
   const toggleNode = (nodeId: string) => {
     if (onToggleNode) {
       onToggleNode(nodeId);
@@ -99,7 +112,7 @@ export function RunHierarchyView({
     });
   };
 
-  const tree = useMemo(() => runHierarchy?.main_runs || [], [runHierarchy]);
+  const tree = runHierarchy?.main_runs || [];
   const legacyCount = runHierarchy?.legacy_orphan_states?.length || 0;
 
   const isExpanded = (nodeId: string, forceOpen = false) =>
@@ -147,7 +160,7 @@ export function RunHierarchyView({
 
   const renderSub = (main: RunHierarchyMain, sub: RunHierarchySub) => {
     const id = `${main.name}::${sub.name}`;
-    const open = isExpanded(id, sub.router_active_last_run === true);
+    const open = isExpanded(id);
     const activeCount = sub.part_runs.filter(part => part.runtime_status !== 'skipped').length;
     const statusText =
       !sub.configured_enabled ? 'config-disabled' :
@@ -216,7 +229,7 @@ export function RunHierarchyView({
 
   const renderMain = (main: RunHierarchyMain) => {
     const id = main.name;
-    const open = isExpanded(id, true);
+    const open = isExpanded(id);
 
     return (
       <div key={id} className="rounded-xl border border-slate-800 bg-slate-900/40 overflow-hidden">

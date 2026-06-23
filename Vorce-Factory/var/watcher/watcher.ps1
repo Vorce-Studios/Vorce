@@ -44,14 +44,14 @@ function Connect-WebSocket {
         }
 
         # Starte den WebSocket Server
-        Write-Log "Starte WebSocket Server auf ws://$ServerHost:$ServerPort"
+        Write-Log ("Starte WebSocket Server auf ws://{0}:{1}" -f $ServerHost, $ServerPort)
         Start-Job -Name "WebSocketServer" -FilePath $WebSocketServerScriptPath -ArgumentList $ServerHost, $ServerPort
 
         # Warte, bis der Server gestartet ist
         Start-Sleep -Seconds 2
 
         # Erstelle WebSocket Client
-        $url = "ws://$ServerHost:$ServerPort"
+        $url = "ws://{0}:{1}" -f $ServerHost, $ServerPort
         Write-Log "Verbinde mit WebSocket Server: $url"
 
         $script:WebSocketClient = New-Object System.Net.WebSocketClient($url)

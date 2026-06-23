@@ -21,6 +21,7 @@ function Write-TestResult {
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
 Write-Host "Projekt-Root: $(Get-Location)" -ForegroundColor Cyan
+. (Join-Path $PSScriptRoot 'RunTopology.Common.ps1')
 
 # Test 1: Globale Variablen setzen
 Write-Host "`n=== GLOBALE VARIABLEN ===" -ForegroundColor Yellow
@@ -84,23 +85,20 @@ if (Test-Path $configPath) {
     Write-TestResult "Config fehlt" $false
 }
 
-# Test 5: Gesundheit der Ordnerstruktur
-Write-Host "`n=== ORDNUNGSTRUKTUR ===" -ForegroundColor Yellow
-$runDirs = Get-ChildItem -Path "$global:VorceRoot/src/runs" -Directory -Name | Where-Object { $_ -match '^MAIN-RUN-\d{2}_' }
-$expectedRuns = @("MAIN-RUN-01_Planning", "MAIN-RUN-02_CheckAndDoing", "MAIN-RUN-03_Audit", "MAIN-RUN-04_Optimizer", "MAIN-RUN-05_MemoryOptimization")
-
-foreach ($expected in $expectedRuns) {
-    $exists = $runDirs -contains $expected
-    Write-TestResult "Main-Run existiert: $expected" $exists
-}
-
-# Test 6: Jeder SUB-RUN besitzt mindestens einen ausführbaren PART-RUN
-Write-Host "`n=== PART-RUN HIERARCHIE ===" -ForegroundColor Yellow
-$subRunScripts = Get-ChildItem -Path "$global:VorceRoot/src/runs" -Recurse -File -Filter "SUB-RUN-*.ps1"
-foreach ($subRun in $subRunScripts) {
-    $partRunDir = Join-Path $subRun.DirectoryName "PART-RUNS"
-    $partRunCount = if (Test-Path $partRunDir) { @(Get-ChildItem $partRunDir -File -Filter "PART-RUN-*.ps1").Count } else { 0 }
-    Write-TestResult "$($subRun.BaseName) besitzt PART-RUNs" ($partRunCount -gt 0)
+# Test 5: Topologie anhand des statischen Manifests
+Write-Host "`n=== RUN-TOPOLOGIE ===" -ForegroundColor Yellow
+try {
+    $topologyReport = Get-VorceRunTopologyReport -ProjectRoot $projectRoot
+    $expectedMainCount = 5
+    $expectedSubCount = 17
+    $expectedPartCount = 18
+    Write-TestResult "Run-Topologie validiert" ($topologyReport.passed)
+    Write-TestResult "Exakt $expectedMainCount MAIN-RUNs" (@($topologyReport.main_runs).Count -eq $expectedMainCount)
+    Write-TestResult "Exakt $expectedSubCount SUB-RUNs" ((@($topologyReport.main_runs | ForEach-Object { @($_.sub_runs).Count }) | Measure-Object -Sum).Sum -eq $expectedSubCount)
+    Write-TestResult "Exakt $expectedPartCount PART-RUNs" ((@($topologyReport.main_runs | ForEach-Object { $_.sub_runs } | ForEach-Object { @($_.parts).Count }) | Measure-Object -Sum).Sum -eq $expectedPartCount)
+    Write-TestResult "Keine kanonischen PART-States als Legacy" (-not (@($topologyReport.legacy_orphan_states | Where-Object { $_.source_file -like 'PART_PART-RUN-*' }).Count))
+} catch {
+    Write-TestResult "Run-Topologie konnte nicht geprüft werden: $($_.Exception.Message)" $false
 }
 
 # Test 7: Prompt-Registry und registrierte Prompt-Dateien prüfen

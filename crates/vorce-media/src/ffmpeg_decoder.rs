@@ -1,7 +1,8 @@
 use crate::{
-    reject_path_traversal, test_pattern_decoder::TestPatternDecoder, HwAccelType, MediaError,
-    Result, VideoDecoder,
+    test_pattern_decoder::TestPatternDecoder, HwAccelType, MediaError, Result, VideoDecoder,
 };
+#[cfg(feature = "ffmpeg")]
+use crate::reject_path_traversal;
 use std::path::Path;
 use std::time::Duration;
 use tracing::info;

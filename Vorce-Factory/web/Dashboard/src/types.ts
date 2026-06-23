@@ -124,9 +124,12 @@ export interface ActiveSessions {
 }
 
 export interface RunHierarchyPart {
+  id: string;
   name: string;
   label?: string;
   script: string;
+  parent_main_name: string;
+  parent_sub_name: string;
   configured_enabled: boolean;
   runtime_status: string;
   activation_reason?: string | null;
@@ -140,6 +143,7 @@ export interface RunHierarchySub {
   name: string;
   label?: string;
   script: string;
+  parent_main_name: string;
   configured_enabled: boolean;
   runtime_status: string;
   activation_reason?: string | null;
@@ -147,6 +151,36 @@ export interface RunHierarchySub {
   router_active_last_run?: boolean;
   latest_state_path?: string | null;
   part_runs: RunHierarchyPart[];
+}
+
+export interface RunHierarchyRouterDecisionConfiguredSubRun {
+  id: string;
+  name: string;
+  script: string;
+  configured_enabled: boolean;
+  active: boolean;
+  reason: 'active_by_router' | 'disabled_in_config' | 'skipped_by_router_condition';
+}
+
+export interface RunHierarchyRouterDecisionActiveSubRun {
+  name: string;
+  active: true;
+}
+
+export interface RunHierarchyRouterDecisionInactiveSubRun {
+  id: string;
+  name: string;
+  script: string;
+  active: false;
+  reason: 'disabled_in_config' | 'skipped_by_router_condition';
+}
+
+export interface RunHierarchyRouterDecision {
+  configured_sub_runs: RunHierarchyRouterDecisionConfiguredSubRun[];
+  active_sub_runs: RunHierarchyRouterDecisionActiveSubRun[];
+  inactive_sub_runs: RunHierarchyRouterDecisionInactiveSubRun[];
+  router_key: string;
+  decision_timestamp?: string | null;
 }
 
 export interface RunHierarchyMain {
@@ -159,13 +193,7 @@ export interface RunHierarchyMain {
   latest_state_path?: string | null;
   latest_state_status?: string;
   last_run_timestamp?: string | null;
-  router_decision?: {
-    configured_sub_runs: any[];
-    active_sub_runs: any[];
-    inactive_sub_runs: any[];
-    router_key: string;
-    decision_timestamp?: string | null;
-  };
+  router_decision?: RunHierarchyRouterDecision;
   sub_runs: RunHierarchySub[];
 }
 
