@@ -1,49 +1,67 @@
 # ProjectManager.ps1 (Vorce 3.0)
-# Spezialisiertes Modul für die Interaktion mit dem @Vorce Project Manager auf GitHub
+# GitHub Project integration through the central shell-free GitHub client.
+
+$githubClientPath = Join-Path $PSScriptRoot '../integrations/GitHubClient.ps1'
+if (-not (Get-Command Invoke-VorceGitHubCommand -ErrorAction SilentlyContinue)) {
+    . $githubClientPath
+}
 
 function Get-VorceProjectSettings {
     return [pscustomobject]@{
-        Owner  = if ($env:VORCE_PROJECT_OWNER) { $env:VORCE_PROJECT_OWNER } else { "Vorce-Studios" }
+        Owner = if ($env:VORCE_PROJECT_OWNER) { $env:VORCE_PROJECT_OWNER } else { 'Vorce-Studios' }
         Number = if ($env:VORCE_PROJECT_NUMBER) { [int]$env:VORCE_PROJECT_NUMBER } else { 1 }
     }
 }
 
 function Invoke-GhCommand {
-    param([Parameter(Mandatory)][string[]]$Arguments)
-    
-    $output = & gh @Arguments 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-VorceStep -Message "gh $($Arguments[0]) fehlgeschlagen: $($output | Out-String)" -Status "WARN"
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string[]]$Arguments,
+
+        [ValidateRange(1, 3600)]
+        [int]$TimeoutSeconds = 30
+    )
+
+    $result = Invoke-VorceGitHubCommand -Arguments $Arguments -TimeoutSeconds $TimeoutSeconds
+    if (-not $result.Succeeded) {
+        Write-VorceStep `
+            -Message "gh $($Arguments[0]) fehlgeschlagen: $(Get-VorceGitHubCommandDiagnostic -Result $result)" `
+            -Status 'WARN'
         return $null
     }
-    return ($output | Out-String | ConvertFrom-Json)
+
+    try {
+        return ConvertFrom-VorceGitHubJson -CommandResult $result
+    } catch {
+        Write-VorceStep -Message "gh $($Arguments[0]) lieferte ungueltiges JSON: $($_.Exception.Message)" -Status 'WARN'
+        return $null
+    }
 }
 
 function Sync-VorceProjectState {
+    [CmdletBinding()]
     param(
-        [Parameter(Mandatory)][object]$RunState
+        [Parameter(Mandatory)]
+        [object]$RunState
     )
-    
+
     $settings = Get-VorceProjectSettings
-    Write-VorceStep -Message "Synchronisiere Status ($($RunState.status)) mit GitHub Project #$($settings.Number)..." -Status "RUN"
-    
-    # In V3.0 nutzen wir die GH CLI direkt für Project V2
+    Write-VorceStep -Message "Synchronisiere Status ($($RunState.status)) mit GitHub Project #$($settings.Number)..." -Status 'RUN'
+
     try {
-        # 1. Suche das Projekt-Item (z.B. basierend auf einem Issue oder dem Namen)
-        # Für den Autopilot selbst nutzen wir oft ein "Management" Item.
-        
-        $projectData = Invoke-GhCommand -Arguments @("project", "view", [string]$settings.Number, "--owner", $settings.Owner, "--format", "json")
-        
+        $projectData = Invoke-GhCommand -Arguments @(
+            'project', 'view', [string]$settings.Number,
+            '--owner', $settings.Owner,
+            '--format', 'json'
+        )
+
         if ($projectData) {
-            # Hier würde die Logik folgen, um ein Item zu finden und zu editieren.
-            # Da wir im Dry-Run/Mock Modus sind, loggen wir den Erfolg.
-            Write-VorceStep -Message "GitHub Project '$($projectData.title)' aktualisiert." -Status "OK"
+            Write-VorceStep -Message "GitHub Project '$($projectData.title)' gelesen." -Status 'OK'
         } else {
-            Write-VorceStep -Message "GitHub Project nicht erreichbar. Überspringe Sync." -Status "WARN"
+            Write-VorceStep -Message 'GitHub Project nicht erreichbar. Ueberspringe Sync.' -Status 'WARN'
         }
     } catch {
-        Write-VorceStep -Message "GitHub Project Sync fehlgeschlagen: $($_.Exception.Message)" -Status "WARN"
+        Write-VorceStep -Message "GitHub Project Sync fehlgeschlagen: $($_.Exception.Message)" -Status 'WARN'
     }
 }
-
-# Ende ProjectManager

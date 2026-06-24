@@ -11,7 +11,8 @@ param(
         "MAIN-RUN-04_Optimizer",
         "MAIN-RUN-05_MemoryOptimization"
     )]
-    [string]$ForceMainRun
+    [string]$ForceMainRun,
+    [string]$ResumeRunId
 )
 
 $global:VorceRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
@@ -99,9 +100,20 @@ function Select-NextMainRun {
     }
 }
 
-# Waehle dynamisch den naechsten Main-RUN
+# Waehle dynamisch den naechsten Main-RUN oder setze einen Checkpoint fort.
 $RunsDir = Join-Path $global:SrcDir "runs"
-$result = Select-NextMainRun -GlobalState $GlobalState -DashboardState $DashboardState -Config $Config -ForceMainRun $ForceMainRun
+$ResumeState = if ($ResumeRunId) { Get-VorceRunStateById -RunId $ResumeRunId -RunType 'MAIN' } else { $null }
+if ($ResumeRunId -and -not $ResumeState) {
+    throw "Resume-MAIN-State nicht gefunden: $ResumeRunId"
+}
+if ($ResumeState -and $ResumeState.status -notin @('waiting_provider', 'running')) {
+    throw "Run '$ResumeRunId' kann mit Status '$($ResumeState.status)' nicht fortgesetzt werden."
+}
+$result = if ($ResumeState) {
+    @{ Name = $ResumeState.name; OverdueMinutes = 0; Forced = $true; Resume = $true }
+} else {
+    Select-NextMainRun -GlobalState $GlobalState -DashboardState $DashboardState -Config $Config -ForceMainRun $ForceMainRun
+}
 if ($null -eq $result) {
     if (-not $DryRun) { Save-VorceGlobalState -State $GlobalState }
     if (-not $DryRun) { $DashboardState | ConvertTo-Json -Depth 10 | Set-Content $DashboardStatePath -Encoding UTF8 }
@@ -124,11 +136,38 @@ $routerFile = Get-ChildItem -Path $MainRunPath -Filter "*-Router.ps1" | Select-O
 
 Write-VorceStep -Message "Lade Sub-Runs von Router..." -Status "INFO"
 
-# Initialisiere Main-Run State vor dem Router-Aufruf.
-$MainState = Initialize-RunState -RunName $mainRunName -RunType "MAIN"
-$MainState.main_run_id = $MainState.id
-$MainState.parent_run_id = $null
+# Initialisiere einen neuen Main-State oder rehydriere denselben unfertigen Run.
+$MainState = if ($ResumeState) {
+    $ResumeState
+} else {
+    Initialize-VorceRunState -RunName $mainRunName -RunType "MAIN"
+}
+if ($ResumeState) {
+    $resumeCount = if ($MainState.resume -and $null -ne $MainState.resume.resume_count) { [int]$MainState.resume.resume_count + 1 } else { 1 }
+    $MainState.resume = [pscustomobject]@{
+        resume_count = $resumeCount
+        last_checkpoint_at = (Get-Date).ToString('o')
+        retry_after = $null
+        blocked_part_run = $null
+        reason = 'process_resume'
+    }
+    $MainState.retry_after = $null
+}
+$MainState = Set-VorceStateRunning -State $MainState
 $MainState = Save-VorceRunState -State $MainState
+$reusedSubRuns = @($MainState.results | Where-Object {
+    $_.status -in @('completed', 'reused') -and
+    @($_.parts).Count -gt 0 -and
+    @($_.parts | Where-Object {
+        $_.status -notin @('completed', 'reused') -or
+        $_.reusable -ne $true -or
+        -not (Test-VorceRunResultArtifact -ResultRef ([string]$_.result_ref))
+    }).Count -eq 0
+} | ForEach-Object {
+    if ($_.sub_run) { $_.sub_run } else { $_.name }
+})
+$ConfigBag.ReusedSubRuns = $reusedSubRuns
+$ConfigBag.ResumeRunId = $ResumeRunId
 $SubRuns = @()
 if ($routerFile) {
     $SubRuns = @(& $routerFile.FullName -ConfigBag $ConfigBag -MainState $MainState)
@@ -136,72 +175,7 @@ if ($routerFile) {
     throw "Kein Router fuer $mainRunName gefunden: $MainRunPath"
 }
 
-$routerKey = ($Config.router_rules.PSObject.Properties | Where-Object {
-    @($_.Value | ForEach-Object { $_.script }) -match [regex]::Escape($mainRunName)
-} | Select-Object -First 1).Name
-if ($routerKey) {
-    $configuredRules = @($Config.router_rules.$routerKey)
-    $SubRuns = @($SubRuns | Where-Object {
-        $subRun = $_
-        $rule = $configuredRules | Where-Object { $_.name -eq $subRun.name -or $_.script -eq $subRun.script } | Select-Object -First 1
-        $null -eq $rule -or $rule.enabled -ne $false
-    })
-}
-
-function Get-RouterDecisionEntry {
-    param(
-        [Parameter(Mandatory)][object]$Rule,
-        [Parameter(Mandatory)][bool]$IsActive
-    )
-
-    $scriptPath = Join-Path $global:VorceRoot $Rule.script
-    $configuredEnabled = $Rule.enabled -ne $false
-    $reason = if (-not $configuredEnabled) {
-        "disabled_in_config"
-    } elseif (-not (Test-Path $scriptPath)) {
-        "script_missing"
-    } elseif ($IsActive) {
-        "active_by_router"
-    } else {
-        "skipped_by_router_condition"
-    }
-
-    return [pscustomobject]@{
-        id = $Rule.id
-        name = $Rule.name
-        script = $Rule.script
-        configured_enabled = $configuredEnabled
-        active = $IsActive -and $configuredEnabled -and (Test-Path $scriptPath)
-        reason = $reason
-    }
-}
-
-if ($routerKey -and $null -ne $MainState.metadata) {
-    $configuredRules = @($Config.router_rules.$routerKey)
-    $activeNames = @($SubRuns | ForEach-Object { $_.name })
-    $decisionEntries = foreach ($rule in $configuredRules) {
-        $ruleActive = $false
-        foreach ($activeName in $activeNames) {
-            if ($activeName -eq $rule.name -or $activeName -like "*$($rule.name)*") {
-                $ruleActive = $true
-                break
-            }
-        }
-        Get-RouterDecisionEntry -Rule $rule -IsActive $ruleActive
-    }
-
-    $MainState.metadata.router_decision = [pscustomobject]@{
-        configured_sub_runs = @($decisionEntries)
-        active_sub_runs = @($decisionEntries | Where-Object { $_.active })
-        inactive_sub_runs = @($decisionEntries | Where-Object { -not $_.active })
-        router_key = $routerKey
-        decision_timestamp = (Get-Date).ToString("o")
-    }
-
-    if (-not $DryRun) {
-        Save-VorceRunState -State $MainState
-    }
-}
+if (-not $DryRun) { Save-VorceRunState -State $MainState | Out-Null }
 
 # F) Try/Catch um jeden Sub-Run (C9)
 Write-VorceDivider -Style "double"
@@ -216,6 +190,7 @@ Write-VorceDivider -Style "double"
 
 $subIndex = 0
 $startTime = Get-Date
+$waitingProviderResult = $null
 foreach ($sub in $SubRuns) {
     $subIndex++
     $subStart = Get-Date
@@ -225,7 +200,25 @@ foreach ($sub in $SubRuns) {
         $subScript = Join-Path $global:VorceRoot $sub.script
         if (Test-Path $subScript) {
             $subResult = & $subScript -ConfigBag $ConfigBag -ParentState $MainState
+            $existingName = if ($subResult.sub_run) { $subResult.sub_run } elseif ($subResult.name) { $subResult.name } else { $sub.name }
+            $MainState.results = @($MainState.results | Where-Object {
+                $candidateName = if ($_.sub_run) { $_.sub_run } else { $_.name }
+                $candidateName -ne $existingName
+            })
             $MainState.results += $subResult
+            foreach ($partState in @($subResult.parts)) {
+                $MainState = Update-VorceExecutionGraph -MainState $MainState -RunState $partState
+            }
+            $MainState = Update-VorceExecutionGraph -MainState $MainState -RunState $subResult
+            if ($subResult.status -eq 'waiting_provider') {
+                $waitingProviderResult = $subResult
+                $blockedPart = @($subResult.parts | Where-Object { $_.status -eq 'waiting_provider' } | Select-Object -First 1)
+                $retryAfter = if ($blockedPart.Count) { $blockedPart[0].retry_after } else { (Get-Date).AddMinutes(15).ToString('o') }
+                $blockedName = if ($blockedPart.Count) { $blockedPart[0].name } else { $sub.name }
+                $MainState = Set-VorceStateWaitingProvider -State $MainState -RetryAfter $retryAfter -BlockedPartRun $blockedName
+                if (-not $DryRun) { Save-VorceRunState -State $MainState | Out-Null }
+                break
+            }
             if ($subResult.status -eq "failed") {
                 $errorMsg = "Mindestens ein PART-RUN in $($sub.name) ist fehlgeschlagen."
                 throw $errorMsg
@@ -240,9 +233,17 @@ foreach ($sub in $SubRuns) {
         Write-VorceRunEnd -RunName $sub.name -Level Sub -Status "failed" -DurationMs ($duration * 1000)
         $MainState.results += @{ name=$sub.name; status="failed"; error=$_.Exception.Message; timestamp=(Get-Date).ToString("o"); duration_sec=$duration }
     }
+    if (-not $DryRun) { Save-VorceRunState -State $MainState | Out-Null }
 }
 
 # G) Nach Abschluss last_runs Timestamp aktualisieren
+if ($waitingProviderResult) {
+    Write-VorceStep -Message "$mainRunName wartet auf einen Provider und wurde als Checkpoint gespeichert." -Status "WARN"
+    Write-VorceRunEnd -RunName $mainRunName -Level Main -Status "waiting_provider"
+    Write-VorceFooter -Message "$mainRunName wartet auf Provider." -Status "waiting_provider"
+    return $MainState
+}
+
 if ($null -eq $GlobalState.last_runs) {
     $GlobalState | Add-Member -MemberType NoteProperty -Name "last_runs" -Value @{} -Force
 }
@@ -272,8 +273,7 @@ Write-VorceDivider
 Write-VorceStep -Message "Fuehre alle Sub-Run Ergebnisse zusammen (Main-Aggregation)..." -Status "RUN"
 
 $failedResults = @($MainState.results | Where-Object { $_.status -eq "failed" })
-$MainState.status = if ($failedResults.Count -gt 0) { "failed" } else { "completed" }
-$MainState.completed_at = (Get-Date).ToString("o")
+$MainState = Set-VorceStateStatus -State $MainState -Status $(if ($failedResults.Count -gt 0) { "failed" } else { "completed" })
 if (-not $DryRun) { Save-VorceRunState -State $MainState }
 
 # Falls ein Aggregations-Skript existiert (z.B. MAIN-RUN-01_Planning_Aggregate.ps1)

@@ -1,201 +1,234 @@
 # QuotaManager.ps1 (Vorce 3.0)
-# Quota-Management fuer alle AI-Provider und CLI-Kommandos
+# Quota-Management fuer alle AI-Provider und CLI-Kommandos.
 
-function Resolve-VorceProviderId {
-    param([Parameter(Mandatory)][string]$ProviderName)
-
-    $name = $ProviderName.Trim().ToLowerInvariant()
-    switch ($name) {
-        'gemini' { return 'gemini_cli' }
-        'gemini_cli' { return 'gemini_cli' }
-        'claude' { return 'claude_code' }
-        'claude_code' { return 'claude_code' }
-        'codex' { return 'codex_orchestrator' }
-        'codex_cli' { return 'codex_orchestrator' }
-        'codex_orchestrator' { return 'codex_orchestrator' }
-        'kiro' { return 'kiro_cli' }
-        'kiro_cli' { return 'kiro_cli' }
-        'cline' { return 'cline_cli' }
-        'cline_cli' { return 'cline_cli' }
-        'copilot' { return 'copilot_cli' }
-        'copilot_cli' { return 'copilot_cli' }
-        'cursor' { return 'cursor_agent' }
-        'cursor-agent' { return 'cursor_agent' }
-        'cursor_agent' { return 'cursor_agent' }
-        'jules' { return 'jules' }
-        'jules_cli' { return 'jules' }
-        'jules_extern' { return 'jules' }
-        default { return $ProviderName }
-    }
+$providerRegistryPath = Join-Path $PSScriptRoot '..\integrations\ProviderRegistry.ps1'
+if (-not (Get-Command Resolve-VorceProviderId -ErrorAction SilentlyContinue)) {
+    . $providerRegistryPath
 }
 
 function Read-VorceQuotaRegistry {
-    # Liest aus: $global:VarDir/config/quota-registry.json
     param()
 
-    $registryPath = Join-Path $global:VarDir "config/quota-registry.json"
-    if (Test-Path $registryPath) {
-        try {
-            $content = Get-Content $registryPath -Raw
-            if ([string]::IsNullOrWhiteSpace($content) -or $content -eq "null") {
-                # Datei existiert aber enthaelt ungueltige Daten
-                return @{}
-            }
-            return $content | ConvertFrom-Json
-        } catch {
-            Write-Warning "Fehler beim Lesen der Quota Registry: $($_.Exception.Message)"
-            return $null
+    $registryPath = Join-Path $global:VarDir 'config/quota-registry.json'
+    if (-not (Test-Path -LiteralPath $registryPath)) {
+        return [pscustomobject]@{}
+    }
+
+    try {
+        $content = Get-Content -LiteralPath $registryPath -Raw -Encoding UTF8
+        if ([string]::IsNullOrWhiteSpace($content) -or $content -eq 'null') {
+            return [pscustomobject]@{}
         }
-    } else {
-        # Datei existiert nicht, leere Registry zurueckgeben
-        return @{}
+        return $content | ConvertFrom-Json
+    } catch {
+        Write-Warning "Fehler beim Lesen der Quota Registry: $($_.Exception.Message)"
+        return $null
     }
 }
 
 function Save-VorceQuotaRegistry {
-    param(
-        [Parameter(Mandatory)][object]$Registry
-    )
+    param([Parameter(Mandatory)][object]$Registry)
 
-    # Speichert nach: $global:VarDir/config/quota-registry.json
-    $registryPath = Join-Path $global:VarDir "config/quota-registry.json"
-    $registryDir = Split-Path $registryPath
-
-    if (-not (Test-Path $registryDir)) {
-        New-Item -ItemType Directory -Path $registryDir -Force | Out-Null
+    $registryPath = Join-Path $global:VarDir 'config/quota-registry.json'
+    $registryDir = Split-Path -Parent $registryPath
+    if (-not (Test-Path -LiteralPath $registryDir)) {
+        $null = New-Item -ItemType Directory -Path $registryDir -Force
     }
 
     try {
-        $Registry | ConvertTo-Json -Depth 10 | Set-Content $registryPath -Encoding UTF8
-
-        # Setzt $global:VorceExhaustedProviders zurueck
-        if (Test-Path "Variable:global:VorceExhaustedProviders") {
+        $tempPath = "$registryPath.$([guid]::NewGuid().ToString('N')).tmp"
+        $Registry | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $tempPath -Encoding UTF8
+        Move-Item -LiteralPath $tempPath -Destination $registryPath -Force
+        if (Test-Path 'Variable:global:VorceExhaustedProviders') {
             $global:VorceExhaustedProviders = @{}
         }
+        return $true
     } catch {
         Write-Warning "Fehler beim Speichern der Quota Registry: $($_.Exception.Message)"
+        return $false
+    }
+}
+
+function Get-VorceQuotaStatus {
+    param(
+        [Parameter(Mandatory)][string]$AgentName,
+        [string]$ModelTier = 'default'
+    )
+
+    $resolved = Resolve-VorceProviderId -ProviderName $AgentName
+    if ($resolved -isnot [string]) {
+        return [pscustomobject]@{
+            available = $false
+            provider_id = $null
+            model_tier = $ModelTier
+            error_class = 'unknown_provider'
+        }
+    }
+
+    $registry = Read-VorceQuotaRegistry
+    $providers = if ($registry) { $registry.providers } else { $null }
+    if ($null -eq $providers -or $providers.PSObject.Properties.Name -notcontains $resolved) {
+        return [pscustomobject]@{
+            available = $false
+            provider_id = $resolved
+            model_tier = $ModelTier
+            error_class = 'unknown_provider'
+        }
+    }
+
+    $provider = $providers.$resolved
+    if ($provider.enabled -ne $true) {
+        return [pscustomobject]@{
+            available = $false
+            provider_id = $resolved
+            model_tier = $ModelTier
+            error_class = 'disabled'
+        }
+    }
+
+    $usage = $provider.usage_today
+    $calls = if ($usage -and $null -ne $usage.calls) { [int]$usage.calls } else { 0 }
+    $cost = if ($usage -and $null -ne $usage.estimated_cost_usd) {
+        [double]$usage.estimated_cost_usd
+    } else {
+        0.0
+    }
+    if ($provider.daily_limit -and $calls -ge [int]$provider.daily_limit) {
+        return [pscustomobject]@{
+            available = $false
+            provider_id = $resolved
+            model_tier = $ModelTier
+            error_class = 'quota_exhausted'
+        }
+    }
+    if ($provider.daily_budget_usd -and $cost -ge [double]$provider.daily_budget_usd) {
+        return [pscustomobject]@{
+            available = $false
+            provider_id = $resolved
+            model_tier = $ModelTier
+            error_class = 'quota_exhausted'
+        }
+    }
+
+    return [pscustomobject]@{
+        available = $true
+        provider_id = $resolved
+        model_tier = $ModelTier
+        error_class = $null
     }
 }
 
 function Test-VorceQuota {
     param(
         [string]$AgentName,
-        [string]$ModelTier = "default"
+        [string]$ModelTier = 'default'
     )
 
-    # Prueft ob Provider enabled, nicht erschoepft, unter daily_limit, unter daily_budget_usd
-    # Prueft ob CLI-Command verfuegbar (Get-Command)
+    $status = Get-VorceQuotaStatus -AgentName $AgentName -ModelTier $ModelTier
+    if (-not $status.available) { return $false }
 
     $registry = Read-VorceQuotaRegistry
-    if ($null -eq $registry) { return $false }
-
-    $providers = $registry.providers
-    $canonicalName = Resolve-VorceProviderId -ProviderName $AgentName
-    if ($null -eq $providers -or $providers.PSObject.Properties.Name -notcontains $canonicalName) {
-        Write-Warning "Provider $canonicalName nicht in Quota Registry gefunden"
+    $provider = $registry.providers.($status.provider_id)
+    if ($provider.command -and -not (Get-Command $provider.command -ErrorAction SilentlyContinue)) {
         return $false
     }
-    $providerConfig = $providers.$canonicalName
-
-    # Pruefe ob Provider enabled ist
-    if ($providerConfig.enabled -ne $true) {
-        return $false
-    }
-
-    # Pruefe CLI-Command Verfuegbarkeit
-    $commandName = $providerConfig.command
-    if ($commandName) {
-        $command = Get-Command $commandName -ErrorAction SilentlyContinue
-        if ($null -eq $command) {
-            return $false
-        }
-    }
-
-    # Pruefe Daily Limit
-    if ($providerConfig.daily_limit -and $null -ne $providerConfig.usage_today.calls) {
-        if ($providerConfig.usage_today.calls -ge $providerConfig.daily_limit) {
-            return $false
-        }
-    }
-
-    # Pruefe Daily Budget
-    if ($providerConfig.daily_budget_usd -and $null -ne $providerConfig.usage_today.estimated_cost_usd) {
-        if ($providerConfig.usage_today.estimated_cost_usd -ge $providerConfig.daily_budget_usd) {
-            return $false
-        }
-    }
-
     return $true
+}
+
+function Add-VorceUsageProperty {
+    param(
+        [Parameter(Mandatory)][object]$Usage,
+        [Parameter(Mandatory)][string]$Name,
+        [object]$DefaultValue = 0
+    )
+
+    if ($Usage.PSObject.Properties.Name -notcontains $Name) {
+        $Usage | Add-Member -MemberType NoteProperty -Name $Name -Value $DefaultValue -Force
+    }
 }
 
 function Register-VorceQuotaUsage {
     param(
         [string]$AgentName,
-        [string]$ModelTier = "default",
-        [double]$Cost = 0
+        [string]$ModelTier = 'default',
+        [double]$Cost = 0,
+        [ValidateSet('success', 'retryable_failure', 'failure')]
+        [string]$Outcome = 'success'
     )
 
+    $resolved = Resolve-VorceProviderId -ProviderName $AgentName
+    if ($resolved -isnot [string]) {
+        return [pscustomobject]@{
+            registered = $false
+            provider_id = $null
+            error_class = 'unknown_provider'
+        }
+    }
+
     $registry = Read-VorceQuotaRegistry
-    if ($null -eq $registry) {
-        $registry = @{}
+    if ($null -eq $registry -or $null -eq $registry.providers -or
+        $registry.providers.PSObject.Properties.Name -notcontains $resolved) {
+        return [pscustomobject]@{
+            registered = $false
+            provider_id = $resolved
+            error_class = 'unknown_provider'
+        }
     }
 
-    $canonicalName = Resolve-VorceProviderId -ProviderName $AgentName
-
-    if (-not $registry.providers) {
-        $registry | Add-Member -MemberType NoteProperty -Name "providers" -Value ([pscustomobject]@{}) -Force
+    $provider = $registry.providers.$resolved
+    if (-not $provider.usage_today) {
+        $provider | Add-Member -MemberType NoteProperty -Name usage_today -Value ([pscustomobject]@{}) -Force
     }
-    if ($registry.providers.PSObject.Properties.Name -notcontains $canonicalName) {
-        $registry.providers | Add-Member -MemberType NoteProperty -Name $canonicalName -Value ([pscustomobject]@{
-            model_tier = $ModelTier;
-            enabled = $true;
-            command = "";
-            daily_limit = 0;
-            daily_budget_usd = 0;
-            usage_today = [pscustomobject]@{ calls = 0; estimated_cost_usd = 0; last_synced_at = (Get-Date).ToString("o") }
-        }) -Force
+    $usage = $provider.usage_today
+    foreach ($name in @(
+        'calls', 'attempted_calls', 'successful_calls',
+        'retryable_failures', 'failed_calls', 'estimated_cost_usd'
+    )) {
+        Add-VorceUsageProperty -Usage $usage -Name $name
     }
-    $providerConfig = $registry.providers.$canonicalName
 
-    if (-not $providerConfig.usage_today) {
-        $providerConfig | Add-Member -MemberType NoteProperty -Name "usage_today" -Value ([pscustomobject]@{ calls = 0; estimated_cost_usd = 0 }) -Force
+    $usage.calls = [int]$usage.calls + 1
+    $usage.attempted_calls = [int]$usage.attempted_calls + 1
+    switch ($Outcome) {
+        'success' { $usage.successful_calls = [int]$usage.successful_calls + 1 }
+        'retryable_failure' { $usage.retryable_failures = [int]$usage.retryable_failures + 1 }
+        'failure' { $usage.failed_calls = [int]$usage.failed_calls + 1 }
     }
-    $providerConfig.usage_today.calls = [int]$providerConfig.usage_today.calls + 1
+    $usage.estimated_cost_usd = [double]$usage.estimated_cost_usd + $Cost
+    Add-VorceUsageProperty -Usage $usage -Name 'last_synced_at' -DefaultValue $null
+    $usage.last_synced_at = (Get-Date).ToString('o')
 
-    $providerConfig.usage_today.estimated_cost_usd = [double]$providerConfig.usage_today.estimated_cost_usd + $Cost
-    $providerConfig.usage_today.last_synced_at = (Get-Date).ToString("o")
-
-    # Speichere Registry
-    Save-VorceQuotaRegistry -Registry $registry
+    $saved = Save-VorceQuotaRegistry -Registry $registry
+    return [pscustomobject]@{
+        registered = $saved
+        provider_id = $resolved
+        model_tier = $ModelTier
+        outcome = $Outcome
+        error_class = if ($saved) { $null } else { 'artifact_missing' }
+    }
 }
 
 function Get-VorceQuotaSummary {
-    param(
-        [object]$Registry
-    )
-
-    # Gibt Zusammenfassung aller Provider als String zurueck
+    param([object]$Registry)
 
     if ($null -eq $Registry) {
         $Registry = Read-VorceQuotaRegistry
-        if ($null -eq $Registry) { return "Keine Quota Registry gefunden" }
+        if ($null -eq $Registry) { return 'Keine Quota Registry gefunden' }
     }
 
-    $summary = @()
-    $summary += "=== QUOTA SUMMARY ==="
-
+    $summary = @('=== QUOTA SUMMARY ===')
     foreach ($providerName in $Registry.providers.PSObject.Properties.Name) {
         $provider = $Registry.providers.$providerName
-        $status = if ($provider.enabled) { "ENABLED" } else { "DISABLED" }
-
+        $status = if ($provider.enabled) { 'ENABLED' } else { 'DISABLED' }
+        $usage = $provider.usage_today
         $summary += "`n[$status] $providerName"
-        $summary += "  Calls today: $(if ($provider.usage_today.calls) { $provider.usage_today.calls } else { 0 })"
-        $summary += "  Est. cost: $([double]$provider.usage_today.estimated_cost_usd)"
+        $summary += "  Calls today: $(if ($usage.calls) { $usage.calls } else { 0 })"
+        $summary += "  Attempted: $(if ($usage.attempted_calls) { $usage.attempted_calls } else { 0 })"
+        $summary += "  Successful: $(if ($usage.successful_calls) { $usage.successful_calls } else { 0 })"
+        $summary += "  Retryable failures: $(if ($usage.retryable_failures) { $usage.retryable_failures } else { 0 })"
+        $summary += "  Est. cost: $([double]$usage.estimated_cost_usd)"
         $summary += "  Daily limit: $(if ($provider.daily_limit) { $provider.daily_limit } else { 0 })"
         $summary += "  Daily budget: $([double]$provider.daily_budget_usd)"
     }
-
     return ($summary -join "`n")
 }
-
-# QuotaManager

@@ -91,8 +91,8 @@ export interface MainRunRuntime {
   next_run_in_seconds?: number;
   status: string;
   summary?: string;
-  latest_state?: any;
-  sub_runs: any[];
+  latest_state?: unknown;
+  sub_runs: unknown[];
   control?: {
     cancel_next?: boolean;
     note?: string;
@@ -114,12 +114,12 @@ export interface ActiveSessions {
   completed_this_session: CompletedItem[];
   decisions_pending?: DecisionPending[];
   deliberation_log?: DeliberationLogEntry[];
-  run_control?: any;
-  optimizer_queue?: any[];
+  run_control?: Record<string, unknown>;
+  optimizer_queue?: OptimizerProposal[];
   last_optimizer_analysis_at?: string;
-  optimizer_last_run?: any;
+  optimizer_last_run?: OptimizerRun;
   main_runs?: MainRunRuntime[];
-  run_states?: any[];
+  run_states?: unknown[];
   run_hierarchy?: RunHierarchyData | null;
 }
 
@@ -233,6 +233,8 @@ export interface RecentRunSummary {
   estimated_cost_usd: number;
   input_tokens: number;
   output_tokens: number;
+  resume_count: number;
+  no_work: number;
   result_summary: string;
   primary_error: string | null;
 }
@@ -241,6 +243,7 @@ export interface RunWindowStats {
   runs_started?: number;
   runs_completed?: number;
   runs_failed?: number;
+  runs_waiting_provider?: number;
   success_rate?: number;
   avg_duration_ms?: number;
   p95_duration_ms?: number;
@@ -260,6 +263,8 @@ export interface RunWindowStats {
   estimated_cost_usd?: number;
   input_tokens?: number;
   output_tokens?: number;
+  resume_count?: number;
+  no_work?: number;
 }
 
 export interface RunSummary {
@@ -276,7 +281,21 @@ export interface ProjectItem {
   jules_session_status?: string;
   pr_checks_status?: string;
   review_status?: string;
-  [key: string]: any;
+  [key: string]: unknown;
+}
+
+export interface ProjectItemsResponse {
+  items: ProjectItem[];
+}
+
+export interface JulesSession {
+  repo?: string;
+  state?: string;
+  [key: string]: unknown;
+}
+
+export interface HistoryEntry {
+  [key: string]: unknown;
 }
 
 // ── GitHub Issues Types ──
@@ -332,6 +351,53 @@ export interface PullRequest {
 }
 
 // ── Autopilot Config Types ──
+export type RouterMode = 'always' | 'automatic' | 'manual_only';
+
+export type RouterCondition =
+  | 'always'
+  | 'pipeline_below_limit'
+  | 'has_untriaged_issues'
+  | 'has_approved_proposals'
+  | 'has_active_jules_delegations'
+  | 'has_active_local_agent_sessions'
+  | 'has_open_prs_requiring_review'
+  | 'jules_capacity_available'
+  | 'housekeeping_due'
+  | 'has_new_audit_inputs'
+  | 'has_open_alerts'
+  | 'optimizer_has_sufficient_samples'
+  | 'optimizer_has_findings'
+  | 'optimizer_has_approved_changes'
+  | 'optimizer_has_changes_to_evaluate'
+  | 'memory_maintenance_due'
+  | 'memory_has_candidates'
+  | 'master_issue_context_changed';
+
+export interface RouterConditionSettings {
+  interval_minutes?: number;
+  max_interval_minutes?: number;
+  minimum_samples?: number;
+}
+
+export interface RouterRule {
+  id: string;
+  name: string;
+  script: string;
+  enabled: boolean;
+  mode: RouterMode;
+  condition: RouterCondition;
+  condition_settings: RouterConditionSettings;
+  dashboard_editable: boolean;
+}
+
+export interface RouterRules {
+  Planning: RouterRule[];
+  CheckAndDoing: RouterRule[];
+  Audit: RouterRule[];
+  Optimizer: RouterRule[];
+  MemoryOptimization: RouterRule[];
+}
+
 export interface AutopilotConfig {
   repository: string;
   wake_intervals: {
@@ -356,7 +422,7 @@ export interface AutopilotConfig {
   max_issues_per_planning_cycle: number;
   working_sessions?: WorkingSessionsConfig;
   dual_ceo: DualCeoConfig;
-  router_rules?: Record<string, Array<{ name: string; script: string; enabled: boolean }>>;
+  router_rules?: RouterRules;
   run_settings?: RunSettings;
   prompts?: {
     planning_analysis?: string;
@@ -430,8 +496,35 @@ export interface DeliberationLogEntry {
 export interface AuditResult {
   session_id: string;
   response: string;
-  parsed: any;
+  parsed?: AuditParsed | null;
   updated_at: string;
+}
+
+export interface AuditParsed {
+  issues_found?: boolean;
+  dashboard_escalation?: string;
+  remediation_command?: string;
+  [key: string]: unknown;
+}
+
+export interface OptimizerProposal {
+  id?: string;
+  title?: string;
+  description?: string;
+  impact?: string;
+  proposed_action?: string;
+  created_at?: string;
+  approved_at?: string;
+  [key: string]: unknown;
+}
+
+export interface OptimizerRun {
+  next_run_at?: string;
+  ran_at?: string;
+  summary?: string;
+  proposals?: OptimizerProposal[];
+  approved_changes?: OptimizerProposal[];
+  [key: string]: unknown;
 }
 
 // ── Memory System Types ──

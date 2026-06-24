@@ -10,7 +10,21 @@ import SettingsPage from './pages/SettingsPage';
 import ManagerReportingPage from './pages/ManagerReportingPage';
 
 // Types
-import type { TabId, AutopilotConfig, QuotaRegistry, ActiveSessions, GitHubIssue, PullRequest, MemoryStore, RunSummary } from './types';
+import type {
+  TabId,
+  AutopilotConfig,
+  QuotaRegistry,
+  ActiveSessions,
+  GitHubIssue,
+  PullRequest,
+  MemoryStore,
+  RunSummary,
+  RunHierarchyData,
+  ProjectItemsResponse,
+  JulesSession,
+  HistoryEntry,
+  AuditResult
+} from './types';
 
 // Defaults
 const defaultAutopilotConfig: AutopilotConfig = {
@@ -76,13 +90,13 @@ export default function App() {
   const { data: sessions, refetch: refetchSessions } = useData<ActiveSessions>('/active-sessions.json', defaultActiveSessions);
   const { data: issues, refetch: refetchIssues } = useData<GitHubIssue[]>('/github-issues.json', []);
   const { data: pullRequests, refetch: refetchPRs } = useData<PullRequest[]>('/pull-requests.json', []);
-  const { data: projectItems, refetch: refetchProjectItems } = useData<any>('/project-items.json', { items: [] });
-  const { data: julesSessions, refetch: refetchJulesSessions } = useData<any[]>('/jules-sessions.json', []);
+  const { data: projectItems, refetch: refetchProjectItems } = useData<ProjectItemsResponse>('/project-items.json', { items: [] });
+  const { data: julesSessions, refetch: refetchJulesSessions } = useData<JulesSession[]>('/jules-sessions.json', []);
   const { data: memoryStore, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
-  const { data: history, refetch: refetchHistory } = useData<any[]>('/data.json', []);
-  const { data: auditResult, refetch: refetchAuditResult } = useData<any>('/audit-result.json', null);
+  const { data: history, refetch: refetchHistory } = useData<HistoryEntry[]>('/data.json', []);
+  const { data: auditResult, refetch: refetchAuditResult } = useData<AuditResult | null>('/audit-result.json', null);
   const { data: runSummary, refetch: refetchRunSummary } = useData<RunSummary>('/run-summary.json', { generated_at: '', recent_runs: [], stats_24h: {}, stats_7d: {} });
-  const { data: runHierarchy, refetch: refetchHierarchy } = useData<any>('/run-hierarchy.json', null);
+  const { data: runHierarchy, refetch: refetchHierarchy } = useData<RunHierarchyData | null>('/run-hierarchy.json', null);
 
   const refetchAll = useCallback(() => {
     refetchConfig();

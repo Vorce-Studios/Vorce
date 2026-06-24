@@ -1,84 +1,104 @@
 # SUB-RUN-05_JulesRefill.ps1 (Vorce 3.0)
-# Prüft ob freie Jules-Slots verfügbar und erstellt neue Sessions für unassigned Tasks
+# Creates GitHub issues for unassigned Jules tasks when capacity is available.
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)][hashtable]$ConfigBag,
-    [Parameter(Mandatory)][object]$ParentState
+    [Parameter(Mandatory)]
+    [hashtable]$ConfigBag,
+
+    [Parameter(Mandatory)]
+    [object]$ParentState
 )
 
-# Setze globale Variablen basierend auf ConfigBag
 $global:VorceRoot = $ConfigBag.VorceRoot
 $global:VarDir = $ConfigBag.VarDir
 $global:LibDir = $ConfigBag.LibDir
-. (Join-Path $global:LibDir "integrations/ApiClient.ps1")
 
-# Lade benötigte Module
-. (Join-Path $global:LibDir "utils/StatusPrinter.ps1")
-. (Join-Path $global:LibDir "state/StateManager.ps1")
-. (Join-Path $global:LibDir "engines/QuotaManager.ps1")
+. (Join-Path $global:LibDir 'utils/StatusPrinter.ps1')
+. (Join-Path $global:LibDir 'state/StateManager.ps1')
+. (Join-Path $global:LibDir 'engines/QuotaManager.ps1')
+. (Join-Path $global:LibDir 'integrations/GitHubClient.ps1')
 
-Write-VorceStep -Message "Starte JulesRefill..." -Status "RUN"
+function Set-VorceRefillTaskProperty {
+    param(
+        [Parameter(Mandatory)]
+        [object]$Task,
 
-# 1. Prüfe ob monitoring_refill_enabled
+        [Parameter(Mandatory)]
+        [string]$Name,
+
+        [AllowNull()]
+        [object]$Value
+    )
+
+    if ($Task.PSObject.Properties.Name -contains $Name) {
+        $Task.$Name = $Value
+    } else {
+        $Task | Add-Member -MemberType NoteProperty -Name $Name -Value $Value -Force
+    }
+}
+
+Write-VorceStep -Message 'Starte JulesRefill...' -Status 'RUN'
+
 if (-not $ConfigBag.Config.jules.monitoring_refill_enabled) {
-    Write-VorceStep -Message "JulesRefill ist deaktiviert." -Status "INFO"
-    return @{ status="disabled"; refill_sessions_created=0; timestamp=(Get-Date).ToString("o") }
+    Write-VorceStep -Message 'JulesRefill ist deaktiviert.' -Status 'INFO'
+    return @{ status = 'disabled'; refill_sessions_created = 0; timestamp = (Get-Date).ToString('o') }
 }
 
-# 2. Prüfe ob freie Jules-Slots verfügbar
-$quotaOK = Test-VorceQuota -AgentName "jules"
+$quotaOK = Test-VorceQuota -AgentName 'jules'
 if (-not $quotaOK) {
-    Write-VorceStep -Message "Keine freien Jules-Slots verfügbar." -Status "WARN"
-    return @{ status="no_quota_available"; refill_sessions_created=0; timestamp=(Get-Date).ToString("o") }
+    Write-VorceStep -Message 'Keine freien Jules-Slots verfuegbar.' -Status 'WARN'
+    return @{ status = 'no_quota_available'; refill_sessions_created = 0; timestamp = (Get-Date).ToString('o') }
 }
 
-# 3. Lese task-journal.json nach unassigned Tasks suchen
-$taskJournalPath = Join-Path $global:VarDir "db/task-journal.json"
+$taskJournalPath = Join-Path $global:VarDir 'db/task-journal.json'
 $unassignedTasks = @()
-
-if (Test-Path $taskJournalPath) {
+$taskJournal = $null
+if (Test-Path -LiteralPath $taskJournalPath -PathType Leaf) {
     try {
-        $taskJournal = Get-Content $taskJournalPath -Raw | ConvertFrom-Json
+        $taskJournal = Get-Content -LiteralPath $taskJournalPath -Raw | ConvertFrom-Json
         $unassignedTasks = @($taskJournal.delegations | Where-Object {
-            $_.status -eq "pending" -and $_.agent -eq "jules" -and $_.sessionCreatedAt -eq $null
+            $_.status -eq 'pending' -and
+            ($_.agent -eq 'jules' -or $_.delegatedTo -eq 'jules') -and
+            $null -eq $_.sessionCreatedAt
         })
     } catch {
-        Write-VorceStep -Message "Fehler beim Lesen von task-journal.json: $($_.Exception.Message)" -Status "ERROR"
+        Write-VorceStep -Message "Fehler beim Lesen von task-journal.json: $($_.Exception.Message)" -Status 'ERROR'
     }
 }
 
 if ($unassignedTasks.Count -eq 0) {
-    Write-VorceStep -Message "Keine unassigned Jules-Tasks gefunden." -Status "INFO"
-    return @{ status="no_unassigned_tasks"; refill_sessions_created=0; timestamp=(Get-Date).ToString("o") }
+    Write-VorceStep -Message 'Keine unassigned Jules-Tasks gefunden.' -Status 'INFO'
+    return @{ status = 'no_unassigned_tasks'; refill_sessions_created = 0; timestamp = (Get-Date).ToString('o') }
 }
 
-Write-VorceStep -Message "Gefunden $($unassignedTasks.Count) unassigned Tasks" -Status "INFO"
+Write-VorceStep -Message "Gefunden $($unassignedTasks.Count) unassigned Tasks" -Status 'INFO'
 
-# 4. Für jeden freien Task: Erstelle neue Jules-Session
 $refillSessionsCreated = 0
-$maxSessionsToCreate = [Math]::Min($unassignedTasks.Count, 3)  # Max 3 neue Sessions pro Lauf
+$maxSessionsToCreate = [Math]::Min($unassignedTasks.Count, 3)
+$repo = [string]$ConfigBag.Config.repository
 
-for ($i = 0; $i -lt $maxSessionsToCreate; $i++) {
-    $task = $unassignedTasks[$i]
-
-    Write-VorceStep -Message "Erstelle Jules-Session für Task: $($task.title)" -Status "RUN"
+for ($index = 0; $index -lt $maxSessionsToCreate; $index++) {
+    $task = $unassignedTasks[$index]
+    $commandResult = $null
+    Write-VorceStep -Message "Erstelle Jules-Session fuer Task: $($task.title)" -Status 'RUN'
 
     try {
-        # Erstelle GitHub Issue für den Task
-        $repo = $ConfigBag.Config.repository
         $taskTitle = "Jules Task: $($task.title)"
+        $taskType = if ($null -ne $task.taskType) { $task.taskType } else { 'general' }
+        $originalIssue = if ($task.issueNumber) { $task.issueNumber } else { 'unknown' }
+        $details = if ($task.description) { $task.description } else { 'Keine zusaetzlichen Details.' }
         $taskBody = @"
-**Task Type:** $($(if ($null -ne $task.taskType) { $task.taskType } else { "general" }))
+**Task Type:** $taskType
 
-**Original Issue:** #$(if ($task.issueNumber) { $task.issueNumber } else { "unknown" })
+**Original Issue:** #$originalIssue
 
 **Delegated from:** Vorce-Factory
 
 **Task Details:**
-$(if ($task.description) { $task.description } else { "Keine zusätzlichen Details."})
+$details
 
 **Requirements:**
-- Erledige diese Aufgabe gemäß den Vorgaben
+- Erledige diese Aufgabe gemaess den Vorgaben
 - Aktualisiere den Status dieser Issue
 - Nutze die im Task beschriebenen Vorgaben
 
@@ -87,63 +107,76 @@ $(if ($task.description) { $task.description } else { "Keine zusätzlichen Detai
 **Created by:** Vorce-Factory
 "@
 
-        # GitHub Issue erstellen
-        $newIssue = Invoke-VorceApiRequest -Uri "https://api.github.com/repos/$repo/issues" -Method POST -Body @{
-            title = $taskTitle
-            body = $taskBody
-            labels = @("jules-task", "autopilot-created", "in-progress")
+        $commandResult = Invoke-VorceGitHubCommand -Arguments @(
+            'issue', 'create',
+            '--repo', $repo,
+            '--title', $taskTitle,
+            '--label', 'jules-task',
+            '--label', 'autopilot-created',
+            '--label', 'in-progress',
+            '--body', $taskBody
+        )
+        if (-not $commandResult.Succeeded) {
+            throw "gh issue create fehlgeschlagen: $(Get-VorceGitHubCommandDiagnostic -Result $commandResult)"
         }
 
-        # Aktualisiere Task mit Issue Information
-        $task.sessionCreatedAt = (Get-Date).ToString("o")
-        $task.issueUrl = $newIssue.html_url
-        $task.issueNumber = $newIssue.number
-        $task.status = "assigned"
-
-        # Aktualisiere task-journal.json
-        $taskJournal | ConvertTo-Json -Depth 10 | Set-Content $taskJournalPath -Encoding UTF8
-
-        # Aktualisiere GlobalState.active_delegations
-        if (-not $ConfigBag.GlobalState.PSObject.Properties.Name -contains "active_delegations") {
-            $ConfigBag.GlobalState | Add-Member -MemberType NoteProperty -Name "active_delegations" -Value @() -Force
+        $issueUrl = ([string]$commandResult.StdOut).Trim()
+        if ($issueUrl -match '(https?://\S+)') {
+            $issueUrl = $Matches[1]
+        }
+        if ([string]::IsNullOrWhiteSpace($issueUrl)) {
+            throw 'gh issue create lieferte keine Issue-URL.'
         }
 
-        $newDelegation = @{
-            issueNumber = $newIssue.number
+        $issueNumber = $null
+        if ($issueUrl -match '/issues/(\d+)(?:$|[/?#])') {
+            $issueNumber = [int]$Matches[1]
+        }
+
+        Set-VorceRefillTaskProperty -Task $task -Name 'sessionCreatedAt' -Value (Get-Date).ToString('o')
+        Set-VorceRefillTaskProperty -Task $task -Name 'issueUrl' -Value $issueUrl
+        Set-VorceRefillTaskProperty -Task $task -Name 'issueNumber' -Value $issueNumber
+        Set-VorceRefillTaskProperty -Task $task -Name 'status' -Value 'assigned'
+        $taskJournal | ConvertTo-Json -Depth 10 |
+            Set-Content -LiteralPath $taskJournalPath -Encoding UTF8
+
+        if ($ConfigBag.GlobalState.PSObject.Properties.Name -notcontains 'active_delegations') {
+            $ConfigBag.GlobalState |
+                Add-Member -MemberType NoteProperty -Name 'active_delegations' -Value @() -Force
+        }
+
+        $ConfigBag.GlobalState.active_delegations += @{
+            issueNumber = $issueNumber
             title = $task.title
-            url = $newIssue.html_url
-            status = "assigned"
-            delegatedTo = "jules"
-            timestamp = (Get-Date).ToString("o")
+            url = $issueUrl
+            status = 'assigned'
+            delegatedTo = 'jules'
+            timestamp = (Get-Date).ToString('o')
         }
-        $ConfigBag.GlobalState.active_delegations += $newDelegation
 
-        # Registriere Quota-Usage
-        Register-VorceQuotaUsage -AgentName "jules" -Cost 0.5
-
+        Register-VorceQuotaUsage -AgentName 'jules' -Cost 0.5 | Out-Null
         $refillSessionsCreated++
-
-        Write-VorceStep -Message "Jules Session erstellt: $($newIssue.html_url)" -Status "OK"
-
+        Write-VorceStep -Message "Jules Session erstellt: $issueUrl" -Status 'OK'
     } catch {
-        Write-VorceStep -Message "Fehler beim Erstellen von Jules Session: $($_.Exception.Message)" -Status "ERROR"
-        $task.status = "failed"
-        $task.error = $_.Exception.Message
+        Write-VorceStep -Message "Fehler beim Erstellen von Jules Session: $($_.Exception.Message)" -Status 'ERROR'
+        Set-VorceRefillTaskProperty -Task $task -Name 'status' -Value 'failed'
+        Set-VorceRefillTaskProperty -Task $task -Name 'error' -Value $_.Exception.Message
+        if ($commandResult) {
+            Set-VorceRefillTaskProperty -Task $task -Name 'error_class' -Value $commandResult.ErrorClass
+        }
     }
 }
 
-# 5. Speichere GlobalState
 Save-VorceGlobalState -State $ConfigBag.GlobalState
 
-# 6. Gib State mit Statistik zurück
 $julesRefillResult = @{
-    status = "completed"
+    status = 'completed'
     refill_sessions_created = $refillSessionsCreated
     quota_available_before = $quotaOK
     unassigned_tasks_found = $unassignedTasks.Count
-    remaining_unassigned = ($unassignedTasks.Count - $refillSessionsCreated)
-    timestamp = (Get-Date).ToString("o")
+    remaining_unassigned = $unassignedTasks.Count - $refillSessionsCreated
+    timestamp = (Get-Date).ToString('o')
 }
 
-Write-VorceStep -Message "JulesRefill abgeschlossen: $refillSessionsCreated neue Sessions erstellt." -Status "OK"
+Write-VorceStep -Message "JulesRefill abgeschlossen: $refillSessionsCreated neue Sessions erstellt." -Status 'OK'
 return $julesRefillResult

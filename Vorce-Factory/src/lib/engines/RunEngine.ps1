@@ -12,6 +12,36 @@ function Get-VorceStringHash {
     }
 }
 
+function ConvertTo-VorceCanonicalObject {
+    param([AllowNull()][object]$Value)
+
+    if ($null -eq $Value) { return $null }
+    if ($Value -is [string] -or $Value -is [ValueType]) { return $Value }
+    if ($Value -is [System.Collections.IDictionary]) {
+        $ordered = [ordered]@{}
+        foreach ($key in @($Value.Keys | ForEach-Object { [string]$_ } | Sort-Object)) {
+            if ($key -in @('timestamp', 'started_at', 'completed_at', 'provider', 'attempt_id', 'session_id')) { continue }
+            $ordered[$key] = ConvertTo-VorceCanonicalObject -Value $Value[$key]
+        }
+        return [pscustomobject]$ordered
+    }
+    if ($Value -is [System.Collections.IEnumerable]) {
+        return @($Value | ForEach-Object { ConvertTo-VorceCanonicalObject -Value $_ })
+    }
+    $ordered = [ordered]@{}
+    foreach ($property in @($Value.PSObject.Properties | Sort-Object Name)) {
+        if ($property.Name -in @('timestamp', 'started_at', 'completed_at', 'provider', 'attempt_id', 'session_id')) { continue }
+        $ordered[$property.Name] = ConvertTo-VorceCanonicalObject -Value $property.Value
+    }
+    return [pscustomobject]$ordered
+}
+
+function Get-VorceInputFingerprint {
+    param([Parameter(Mandatory)][object]$InputObject)
+    $canonical = ConvertTo-VorceCanonicalObject -Value $InputObject
+    return Get-VorceStringHash -Text ($canonical | ConvertTo-Json -Depth 30 -Compress)
+}
+
 function Test-VorceFinalStateObject {
     param([Parameter(Mandatory)][object]$InputObject)
 
@@ -75,42 +105,51 @@ function Invoke-VorcePartRun {
         [Parameter(Mandatory)][string]$ScriptPath,
         [object]$ParentState = $null,
         [hashtable]$Arguments = @{},
-        [string]$InputFingerprint = $null
+        [string]$InputFingerprint = $null,
+        [object[]]$DependencyResultIds = @(),
+        [switch]$ForceRecompute,
+        [switch]$SkipExecution = $false
     )
 
     if (-not $InputFingerprint) {
+        $businessArguments = [ordered]@{}
+        foreach ($key in @($Arguments.Keys | Sort-Object)) {
+            if ([string]$key -in @('ConfigBag', 'ParentState')) { continue }
+            $businessArguments[[string]$key] = $Arguments[$key]
+        }
         $fingerprintInput = [ordered]@{
             part = $PartName
             script = $ScriptPath
-            parent = if ($ParentState) { $ParentState.id } else { '' }
-            arguments = $Arguments
+            arguments = $businessArguments
+            dependency_result_ids = @($DependencyResultIds)
         }
-        $InputFingerprint = Get-VorceStringHash -Text (($fingerprintInput | ConvertTo-Json -Depth 10 -Compress))
+        $InputFingerprint = Get-VorceInputFingerprint -InputObject $fingerprintInput
     }
 
-    $mainRunId = if ($ParentState -and $ParentState.main_run_id) { [string]$ParentState.main_run_id } else { '' }
+    $mainRunId = if ($ParentState -and $ParentState.main_run_id) { [string]$ParentState.main_run_id } elseif ($ParentState) { [string]$ParentState.id } else { '' }
     $parentRunId = if ($ParentState) { [string]$ParentState.id } else { $null }
-    $reusable = if ($mainRunId) { Get-VorceReusableRunResult -MainRunId $mainRunId -RunName $PartName -InputFingerprint $InputFingerprint } else { $null }
+    $reusable = if ($mainRunId -and -not $ForceRecompute) {
+        Get-VorceReusableRunResult -MainRunId $mainRunId -RunName $PartName -InputFingerprint $InputFingerprint -DependencyResultIds $DependencyResultIds
+    } else { $null }
     if ($reusable) {
-        return [pscustomobject]@{
-            schema_version = 2
-            id = $reusable.id
-            main_run_id = $reusable.main_run_id
-            parent_run_id = $reusable.parent_run_id
-            name = $PartName
-            type = 'PART'
-            status = 'reused'
-            started_at = $reusable.started_at
-            completed_at = $reusable.completed_at
-            duration_ms = $reusable.duration_ms
-            input_fingerprint = $InputFingerprint
-            metadata = $reusable.metadata
-            results = @($reusable.results)
-            reusable = $true
-        }
+        $reusedState = New-VorceRunStateObject -RunName $PartName -RunType 'PART' -MainRunId $mainRunId -ParentRunId $parentRunId -InputFingerprint $InputFingerprint
+        $reusedState.dependency_result_ids = @($DependencyResultIds)
+        $reusedState.result_id = $reusable.result_id
+        $reusedState.result_ref = $reusable.result_ref
+        $reusedState.result_summary = $reusable.result_summary
+        $reusedState.results = @($reusable.results)
+        $reusedState.attempts = @($reusable.attempts)
+        $reusedState = Set-VorceStateReused -State $reusedState
+        Save-VorceRunState -State $reusedState | Out-Null
+        return $reusedState
     }
 
     $PartState = Initialize-RunState -RunName $PartName -RunType "PART" -MainRunId $mainRunId -ParentRunId $parentRunId -InputFingerprint $InputFingerprint
+    $PartState.dependency_result_ids = @($DependencyResultIds)
+    $priorAttemptState = Get-VorcePriorRunAttemptState -MainRunId $mainRunId -RunName $PartName -InputFingerprint $InputFingerprint
+    if ($priorAttemptState) { $PartState.attempts = @($priorAttemptState.attempts) }
+    $PartState = Set-VorceStateRunning -State $PartState
+    Save-VorceRunState -State $PartState | Out-Null
     Write-VorceRunStart -RunName $PartName -Level Part
     Write-VorceStep -Message "Fuehre Part-Run aus: $PartName" -Status "RUN"
 
@@ -118,40 +157,54 @@ function Invoke-VorcePartRun {
         if (-not (Test-Path $ScriptPath)) { throw "Skript nicht gefunden: $ScriptPath" }
 
         # In V3 nutzen wir isolierte Jobs oder ScriptBlocks fuer Parallelitaet
-        $result = & $ScriptPath @Arguments
-        if ($null -ne $result) {
-            $hasErrorProperty = if ($result -is [System.Collections.IDictionary]) {
-                $result.Contains("error")
-            } else {
-                $result.PSObject.Properties.Name -contains "error"
-            }
-            $hasError = $hasErrorProperty -and -not [string]::IsNullOrWhiteSpace([string]$result.error)
-            if ($result.status -eq "failed" -or $hasError) {
-                $reason = if ($hasError) { [string]$result.error } else { "PART-RUN meldete Status 'failed'." }
-                throw $reason
+        if (-not $SkipExecution) {
+            $result = & $ScriptPath @Arguments
+            if ($null -ne $result) {
+                $hasErrorProperty = if ($result -is [System.Collections.IDictionary]) {
+                    $result.Contains("error")
+                } else {
+                    $result.PSObject.Properties.Name -contains "error"
+                }
+                $hasError = $hasErrorProperty -and -not [string]::IsNullOrWhiteSpace([string]$result.error)
+                if ($result.status -eq "failed" -or ($hasError -and $result.status -ne 'waiting_provider')) {
+                    $reason = if ($hasError) { [string]$result.error } else { "PART-RUN meldete Status 'failed'." }
+                    throw $reason
+                }
             }
         }
         
-        $PartState.status = "completed"
-        $PartState.results += $result
-        Write-VorceStep -Message "Part-Run $PartName abgeschlossen." -Status "OK"
-        Write-VorceRunEnd -RunName $PartName -Level Part -Status "completed"
+        if ($result -and $result.status -eq 'waiting_provider') {
+            $PartState.attempts = @($PartState.attempts + @($result.attempts) | Group-Object {
+                if ($_.attempt_id) { $_.attempt_id } else { "$($_.provider)|$($_.error_class)|$($_.exit_code)" }
+            } | ForEach-Object { $_.Group[0] })
+            $PartState.error = $result.error
+            $PartState.error_class = $result.error_class
+            $PartState = Set-VorceStateWaitingProvider -State $PartState -RetryAfter $result.retry_after -BlockedPartRun $PartName
+            $PartState.results = @($result)
+            Write-VorceRunEnd -RunName $PartName -Level Part -Status "waiting_provider"
+        } else {
+            $PartState = Set-VorceStateStatus -State $PartState -Status "completed"
+            if ($result) {
+                $PartState.results += $result
+                if ($result.PSObject.Properties.Name -contains 'attempts') {
+                    $PartState.attempts = @($PartState.attempts + @($result.attempts) | Group-Object {
+                        if ($_.attempt_id) { $_.attempt_id } else { "$($_.provider)|$($_.error_class)|$($_.exit_code)" }
+                    } | ForEach-Object { $_.Group[0] })
+                }
+                if ($result.PSObject.Properties.Name -contains 'summary') { $PartState.result_summary = [string]$result.summary }
+            }
+            $PartState = Save-VorceRunResultArtifact -State $PartState -Result $result
+            $PartState.reusable = $true
+            Write-VorceStep -Message "Part-Run $PartName abgeschlossen." -Status "OK"
+            Write-VorceRunEnd -RunName $PartName -Level Part -Status "completed"
+        }
     } catch {
-        $PartState.status = "failed"
-        $PartState.metadata["error"] = $_.Exception.Message
+        $PartState = Set-VorceStateStatus -State $PartState -Status "failed" -Error $_.Exception.Message -ErrorClass "execution_error"
         Write-VorceStep -Message "Fehler in Part-Run ${PartName}: $($_.Exception.Message)" -Status "ERROR"
         Write-VorceRunEnd -RunName $PartName -Level Part -Status "failed"
-    } finally {
-        $PartState.completed_at = (Get-Date).ToString("o")
-        if ($PartState.started_at -and $PartState.completed_at) {
-            $PartState.duration_ms = [int]((New-TimeSpan -Start ([datetime]$PartState.started_at) -End ([datetime]$PartState.completed_at)).TotalMilliseconds)
-        }
-        # Speichern des Part-States
-        $statePath = Join-Path $global:VarDir "run-states/PART_$($PartName).json"
-        Ensure-VorceParentDirectory -Path $statePath
-        $PartState | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $statePath -Encoding UTF8
-        Save-VorceRunState -State $PartState | Out-Null
     }
+
+    Save-VorceRunState -State $PartState | Out-Null
     
     return $PartState
 }
@@ -165,18 +218,23 @@ function Invoke-VorceSubRunParallel {
         [int]$MaxParallel = 3,
         [scriptblock]$JobFactory = $null
     )
-    
-    $subSettings = $ConfigBag.Config.run_settings.sub_runs.($SubRunName)
+
+    $subSettings = if ($ConfigBag.Config -and $ConfigBag.Config.run_settings -and $ConfigBag.Config.run_settings.sub_runs) { $ConfigBag.Config.run_settings.sub_runs.($SubRunName) } else { $null }
     if ($subSettings -and $subSettings.max_parallel -gt 0) {
         $MaxParallel = [int]$subSettings.max_parallel
     }
     $PartRuns = @($PartRuns | Where-Object {
-        $partSettings = $ConfigBag.Config.run_settings.part_runs.($_.name)
+        $partSettings = if ($ConfigBag.Config -and $ConfigBag.Config.run_settings -and $ConfigBag.Config.run_settings.part_runs) { $ConfigBag.Config.run_settings.part_runs.($_.name) } else { $null }
         $null -eq $partSettings -or $partSettings.enabled -ne $false
     })
 
     Write-VorceStep -Message "Starte parallele Ausfuehrung fuer $SubRunName ($($PartRuns.Count) Parts, Max: $MaxParallel)" -Status "RUN"
-    
+
+    $subState = Initialize-RunState -RunName $SubRunName -RunType "SUB" -MainRunId $ParentState.main_run_id -ParentRunId $ParentState.id
+    $subState = Set-VorceStateRunning -State $subState
+    Save-VorceRunState -State $subState | Out-Null
+    Write-VorceRunStart -RunName $SubRunName -Level Sub
+
     $activeJobs = @()
     $completedResults = @()
     $queue = [System.Collections.Generic.Queue[object]]::new($PartRuns)
@@ -187,15 +245,15 @@ function Invoke-VorceSubRunParallel {
         $JobFactory = {
             param($part, $pConfigBag, $pParentState, $pLibDir, $pVarDir, $pRoot)
             Start-Job -ScriptBlock {
-                param($pName, $pScript, $pLibDir, $pVarDir, $pRoot, $pConfigBag, $pParentState)
+                param($pName, $pScript, $pLibDir, $pVarDir, $pRoot, $pConfigBag, $pParentState, $pFingerprint, $pDependencies)
                 $global:VarDir = $pVarDir
                 $global:LibDir = $pLibDir
                 $global:VorceRoot = $pRoot
                 . (Join-Path $pLibDir "utils/StatusPrinter.ps1")
                 . (Join-Path $pLibDir "state/StateManager.ps1")
                 . (Join-Path $pLibDir "engines/RunEngine.ps1")
-                Invoke-VorcePartRun -PartName $pName -ScriptPath $pScript -ParentState $pParentState -Arguments @{ ConfigBag = $pConfigBag }
-            } -ArgumentList $part.name, $part.script, $pLibDir, $pVarDir, $pRoot, $pConfigBag, $pParentState -Name $part.name
+                Invoke-VorcePartRun -PartName $pName -ScriptPath $pScript -ParentState $pParentState -Arguments @{ ConfigBag = $pConfigBag } -InputFingerprint $pFingerprint -DependencyResultIds @($pDependencies)
+            } -ArgumentList $part.name, $part.script, $pLibDir, $pVarDir, $pRoot, $pConfigBag, $pParentState, $part.input_fingerprint, @($part.dependency_result_ids) -Name $part.name
         }
     }
 
@@ -205,11 +263,11 @@ function Invoke-VorceSubRunParallel {
             $part = $queue.Dequeue()
             Write-VorceStep -Message "Queue -> Job: $($part.name)" -Status "INFO"
 
-            $job = & $JobFactory $part $ConfigBag $ParentState $global:LibDir $global:VarDir $global:VorceRoot
+            $job = & $JobFactory $part $ConfigBag $subState $global:LibDir $global:VarDir $global:VorceRoot
 
             $activeJobs += $job
         }
-        
+
         # 2. Pruefe auf fertige Jobs und sammle Output erst nach Jobende genau einmal
         $stillActive = @()
         foreach ($job in $activeJobs) {
@@ -263,58 +321,60 @@ function Invoke-VorceSubRunParallel {
             Remove-Job $job -Force
         }
         $activeJobs = $stillActive
-        
-        if ($activeJobs.Count -gt 0 -or $queue.Count -gt 0) { 
+
+        if ($activeJobs.Count -gt 0 -or $queue.Count -gt 0) {
             $spinIdx = ($spinIdx + 1) % $spinChars.Count
             $char = $spinChars[$spinIdx]
             $msg = "  $char [$($activeJobs.Count) aktive Jobs, $($queue.Count) in Warteschlange]      "
             Write-Host -NoNewline "`r$msg"
-            Start-Sleep -Milliseconds 250 
+            Start-Sleep -Milliseconds 250
         }
     }
     Write-Host "`r" # Clear Spinner line
 
-    
     # 3. Aggregations-Logik (Sub-Run Ebene)
     Write-VorceStep -Message "Starte Aggregations-Phase fuer $SubRunName..." -Status "RUN"
     $failedParts = @($completedResults | Where-Object { $_.status -eq "failed" })
+    $waitingParts = @($completedResults | Where-Object { $_.status -eq "waiting_provider" })
 
-    $aggregatedData = @{
-        sub_run = $SubRunName
-        status = if ($failedParts.Count -gt 0) { "failed" } else { "completed" }
-        timestamp = (Get-Date).ToString("o")
-        parts = $completedResults
+    $subState = if ($waitingParts.Count -gt 0) {
+        Set-VorceStateWaitingProvider -State $subState -RetryAfter $waitingParts[0].retry_after -BlockedPartRun $waitingParts[0].name
+    } else {
+        Set-VorceStateStatus -State $subState -Status $(if ($failedParts.Count -gt 0) { "failed" } else { "completed" })
     }
-    
-    # Speichere Sub-Run State vorab
-    $statePath = Join-Path $global:VarDir "run-states/SUB_$($SubRunName).json"
-    Ensure-VorceParentDirectory -Path $statePath
-    $aggregatedData | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $statePath -Encoding UTF8
-    Save-VorceRunState -State ([pscustomobject]@{
-        schema_version = 2
-        id = [guid]::NewGuid().ToString('N')
-        main_run_id = if ($ParentState -and $ParentState.main_run_id) { $ParentState.main_run_id } elseif ($ParentState) { $ParentState.id } else { $null }
-        parent_run_id = if ($ParentState) { $ParentState.id } else { $null }
-        name = $SubRunName
-        type = 'SUB'
-        status = $aggregatedData.status
-        started_at = if ($ParentState -and $ParentState.started_at) { $ParentState.started_at } else { (Get-Date).ToString("o") }
-        completed_at = (Get-Date).ToString("o")
-        duration_ms = $null
-        input_fingerprint = $null
-        metadata = @{}
-        results = @($completedResults)
-    }) | Out-Null
-    
-    # OPTIONAL: Falls ein dediziertes Aggregations-Skript existiert, fuehre es aus
-    # (z.B. SUB-RUN-01_DataSync_Aggregate.ps1)
-    
+    $subState.results = @($completedResults)
+    $subState.parts = @($completedResults)
+    if ($subState.status -eq 'completed') {
+        $subState = Save-VorceRunResultArtifact -State $subState -Result @($completedResults)
+        $subState.reusable = @($completedResults | Where-Object { $_.status -notin @('completed', 'reused') -or $_.reusable -ne $true }).Count -eq 0
+    }
+
+    Save-VorceRunState -State $subState | Out-Null
+    Write-VorceRunEnd -RunName $SubRunName -Level Sub -Status $subState.status
+
     if ($failedParts.Count -gt 0) {
         Write-VorceStep -Message "Sub-Run $SubRunName mit $($failedParts.Count) fehlgeschlagenen PART-RUNs aggregiert." -Status "ERROR"
     } else {
         Write-VorceStep -Message "Sub-Run $SubRunName erfolgreich aggregiert." -Status "OK"
     }
-    return $aggregatedData
+    return @{
+        id = $subState.id
+        main_run_id = $subState.main_run_id
+        parent_run_id = $subState.parent_run_id
+        name = $SubRunName
+        type = 'SUB'
+        sub_run = $SubRunName
+        status = $subState.status
+        started_at = $subState.started_at
+        completed_at = $subState.completed_at
+        duration_ms = $subState.duration_ms
+        timestamp = (Get-Date).ToString("o")
+        parts = $completedResults
+        result_id = $subState.result_id
+        result_ref = $subState.result_ref
+        reusable = $subState.reusable
+        attempts = @($completedResults | ForEach-Object { @($_.attempts) })
+    }
 }
 
 function Invoke-VorceSubRunSequential {
@@ -326,58 +386,73 @@ function Invoke-VorceSubRunSequential {
     )
 
     $PartRuns = @($PartRuns | Where-Object {
-        $partSettings = $ConfigBag.Config.run_settings.part_runs.($_.name)
+        $partSettings = if ($ConfigBag.Config -and $ConfigBag.Config.run_settings -and $ConfigBag.Config.run_settings.part_runs) { $ConfigBag.Config.run_settings.part_runs.($_.name) } else { $null }
         $null -eq $partSettings -or $partSettings.enabled -ne $false
     })
 
     Write-VorceStep -Message "Starte sequenzielle Ausfuehrung fuer $SubRunName ($($PartRuns.Count) Parts)" -Status "RUN"
-    $partStates = @()
 
+    $subState = Initialize-RunState -RunName $SubRunName -RunType "SUB" -MainRunId $ParentState.main_run_id -ParentRunId $ParentState.id
+    $subState = Set-VorceStateRunning -State $subState
+    Save-VorceRunState -State $subState | Out-Null
+    Write-VorceRunStart -RunName $SubRunName -Level Sub
+
+    $partStates = @()
     foreach ($part in $PartRuns) {
         $arguments = @{
             ConfigBag = $ConfigBag
-            ParentState = $ParentState
+            ParentState = $subState
         }
         if ($part.ContainsKey("arguments")) {
             foreach ($key in $part.arguments.Keys) {
                 $arguments[$key] = $part.arguments[$key]
             }
         }
+        $dependencyIds = if ($part.ContainsKey('dependency_result_ids')) { @($part.dependency_result_ids) } else { @() }
+        $fingerprint = if ($part.ContainsKey('input_fingerprint')) { [string]$part.input_fingerprint } else { $null }
 
         $partStates += Invoke-VorcePartRun `
             -PartName $part.name `
             -ScriptPath $part.script `
-            -ParentState $ParentState `
-            -Arguments $arguments
+            -ParentState $subState `
+            -Arguments $arguments `
+            -InputFingerprint $fingerprint `
+            -DependencyResultIds $dependencyIds
+        if ($partStates[-1].status -eq 'waiting_provider') { break }
     }
 
     $failed = @($partStates | Where-Object { $_.status -eq "failed" })
-    $aggregatedData = @{
-        sub_run = $SubRunName
-        status = if ($failed.Count -gt 0) { "failed" } else { "completed" }
-        timestamp = (Get-Date).ToString("o")
-        parts = $partStates
+    $waiting = @($partStates | Where-Object { $_.status -eq "waiting_provider" })
+    $subState = if ($waiting.Count -gt 0) {
+        Set-VorceStateWaitingProvider -State $subState -RetryAfter $waiting[0].retry_after -BlockedPartRun $waiting[0].name
+    } else {
+        Set-VorceStateStatus -State $subState -Status $(if ($failed.Count -gt 0) { "failed" } else { "completed" })
+    }
+    $subState.results = @($partStates)
+    $subState.parts = @($partStates)
+    if ($subState.status -eq 'completed') {
+        $subState = Save-VorceRunResultArtifact -State $subState -Result @($partStates)
+        $subState.reusable = @($partStates | Where-Object { $_.status -notin @('completed', 'reused') -or $_.reusable -ne $true }).Count -eq 0
     }
 
-    $statePath = Join-Path $global:VarDir "run-states/SUB_$($SubRunName).json"
-    Ensure-VorceParentDirectory -Path $statePath
-    $aggregatedData | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $statePath -Encoding UTF8
-    Save-VorceRunState -State ([pscustomobject]@{
-        schema_version = 2
-        id = [guid]::NewGuid().ToString('N')
-        main_run_id = if ($ParentState -and $ParentState.main_run_id) { $ParentState.main_run_id } elseif ($ParentState) { $ParentState.id } else { $null }
-        parent_run_id = if ($ParentState) { $ParentState.id } else { $null }
+    Save-VorceRunState -State $subState | Out-Null
+    Write-VorceRunEnd -RunName $SubRunName -Level Sub -Status $subState.status
+
+    return @{
+        id = $subState.id
+        main_run_id = $subState.main_run_id
+        parent_run_id = $subState.parent_run_id
         name = $SubRunName
         type = 'SUB'
-        status = $aggregatedData.status
-        started_at = if ($ParentState -and $ParentState.started_at) { $ParentState.started_at } else { (Get-Date).ToString("o") }
-        completed_at = (Get-Date).ToString("o")
-        duration_ms = $null
-        input_fingerprint = $null
-        metadata = @{}
-        results = @($partStates)
-    }) | Out-Null
-    return $aggregatedData
+        sub_run = $SubRunName
+        status = $subState.status
+        timestamp = (Get-Date).ToString("o")
+        parts = $partStates
+        result_id = $subState.result_id
+        result_ref = $subState.result_ref
+        reusable = $subState.reusable
+        attempts = @($partStates | ForEach-Object { @($_.attempts) })
+    }
 }
 
 # Ende RunEngine

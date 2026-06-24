@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react';
 import { AlertCircle, Check, ChevronDown, ChevronRight, Cpu, Layers, Loader2, Save, Settings, Shield } from 'lucide-react';
-import type { AutopilotConfig, QuotaRegistry, MemoryStore, RunUnitSettings } from '../types';
+import type {
+  AutopilotConfig,
+  MemoryStore,
+  QuotaRegistry,
+  RouterCondition,
+  RouterConditionSettings,
+  RouterMode,
+  RouterRule,
+  RouterRules,
+  RunUnitSettings,
+} from '../types';
 import MemoryPanel from './MemoryPanel';
 
 interface Props {
@@ -26,17 +36,32 @@ interface SubRunCatalog {
   label: string;
   script: string;
   enabled: boolean;
+  mode: RouterMode;
+  condition: RouterCondition;
+  condition_settings: RouterConditionSettings;
+  dashboard_editable: boolean;
+  allowed_conditions: RouterCondition[];
+  condition_settings_schema: Record<string, NumericSettingCatalog>;
+  condition_settings_schemas: Partial<Record<RouterCondition, Record<string, NumericSettingCatalog>>>;
   description?: string;
   prompt_key?: string;
   system_prompt?: string;
   part_runs: PartRunCatalog[];
 }
 
+interface NumericSettingCatalog {
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  default: number;
+}
+
 interface MainRunCatalog {
   name: string;
   actualName: string;
   label: string;
-  routerKey: string;
+  routerKey: keyof RouterRules;
   intervalKey: keyof AutopilotConfig['wake_intervals'];
   description?: string;
   prompt_key?: string;
@@ -60,6 +85,54 @@ const PROVIDER_LABELS: Record<string, string> = {
   codex_orchestrator: 'Codex Orchestrator',
 };
 
+const ROUTER_MODES: Array<{ value: RouterMode; label: string }> = [
+  { value: 'always', label: 'Immer' },
+  { value: 'automatic', label: 'Automatisch' },
+  { value: 'manual_only', label: 'Nur manuell' },
+];
+
+const CONDITION_LABELS: Record<RouterCondition, string> = {
+  always: 'Immer',
+  pipeline_below_limit: 'Pipeline unter Limit',
+  has_untriaged_issues: 'Untriagierte Issues vorhanden',
+  has_approved_proposals: 'Freigegebene Vorschlaege vorhanden',
+  has_active_jules_delegations: 'Aktive Jules-Delegationen',
+  has_active_local_agent_sessions: 'Aktive lokale Agent-Sessions',
+  has_open_prs_requiring_review: 'Offene PRs benoetigen Review',
+  jules_capacity_available: 'Jules-Kapazitaet verfuegbar',
+  housekeeping_due: 'Housekeeping faellig',
+  has_new_audit_inputs: 'Neue Audit-Eingaben',
+  has_open_alerts: 'Offene Alerts',
+  optimizer_has_sufficient_samples: 'Genuegend Optimizer-Samples',
+  optimizer_has_findings: 'Optimizer-Findings vorhanden',
+  optimizer_has_approved_changes: 'Freigegebene Optimizer-Aenderungen',
+  optimizer_has_changes_to_evaluate: 'Optimizer-Aenderungen zu bewerten',
+  memory_maintenance_due: 'Memory-Wartung faellig',
+  memory_has_candidates: 'Memory-Kandidaten vorhanden',
+  master_issue_context_changed: 'Master-Issue-Kontext geaendert',
+};
+
+const CONDITION_SUMMARIES: Record<RouterCondition, string> = {
+  always: 'jedem Lauf',
+  pipeline_below_limit: 'freier Pipeline',
+  has_untriaged_issues: 'untriagierten Issues',
+  has_approved_proposals: 'freigegebenen Vorschlaegen',
+  has_active_jules_delegations: 'aktiven Jules-Delegationen',
+  has_active_local_agent_sessions: 'aktiven lokalen Agent-Sessions',
+  has_open_prs_requiring_review: 'offenen PRs mit Review-Bedarf',
+  jules_capacity_available: 'verfuegbarer Jules-Kapazitaet',
+  housekeeping_due: 'faelligem Housekeeping',
+  has_new_audit_inputs: 'neuen Audit-Eingaben',
+  has_open_alerts: 'offenen Alerts',
+  optimizer_has_sufficient_samples: 'ausreichenden Samples',
+  optimizer_has_findings: 'vorhandenen Optimizer-Findings',
+  optimizer_has_approved_changes: 'freigegebenen Optimizer-Aenderungen',
+  optimizer_has_changes_to_evaluate: 'zu bewertenden Optimizer-Aenderungen',
+  memory_maintenance_due: 'faelliger Memory-Wartung',
+  memory_has_candidates: 'vorhandenen Memory-Kandidaten',
+  master_issue_context_changed: 'geaendertem Master-Issue-Kontext',
+};
+
 function splitChain(value: string): string[] {
   return value.split(',').map(item => item.trim()).filter(Boolean);
 }
@@ -81,6 +154,19 @@ function settingWithFallback(settings: RunUnitSettings | undefined, descriptionF
   };
 }
 
+function conditionDefaults(subRun: SubRunCatalog, condition: RouterCondition): RouterConditionSettings {
+  return Object.fromEntries(
+    Object.entries(subRun.condition_settings_schemas[condition] || {}).map(([key, definition]) => [key, definition.default]),
+  );
+}
+
+function routerSummary(mainRun: MainRunCatalog, rule: RouterRule): string {
+  if (!rule.enabled) return `${mainRun.label}/${rule.name}: deaktiviert`;
+  if (rule.mode === 'always') return `${mainRun.label}/${rule.name}: immer`;
+  if (rule.mode === 'manual_only') return `${mainRun.label}/${rule.name}: nur manuell`;
+  return `${mainRun.label}/${rule.name}: automatisch bei ${CONDITION_SUMMARIES[rule.condition]}`;
+}
+
 export default function SettingsPage({ config: propConfig, registry: propRegistry, memoryStore, onSave, onMemoryRefresh }: Props) {
   const [config, setConfig] = useState<AutopilotConfig | null>(null);
   const [registry, setRegistry] = useState<QuotaRegistry | null>(null);
@@ -88,6 +174,7 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
   const [expandedMain, setExpandedMain] = useState<Record<string, boolean>>({});
   const [expandedSub, setExpandedSub] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
+  const [reviewingSave, setReviewingSave] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
@@ -139,26 +226,44 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
     }));
   };
 
-  const updateSubEnabled = (mainRun: MainRunCatalog, subRun: SubRunCatalog, enabled: boolean) => {
+  const updateRouterRule = (mainRun: MainRunCatalog, subRun: SubRunCatalog, patch: Partial<RouterRule>) => {
     updateConfig(current => ({
       ...current,
       router_rules: {
-        ...(current.router_rules || {}),
+        ...current.router_rules!,
         [mainRun.routerKey]: (current.router_rules?.[mainRun.routerKey] || []).map(rule =>
-          rule.name === subRun.label || rule.script === subRun.script ? { ...rule, enabled } : rule
+          rule.id === subRun.id ? { ...rule, ...patch } : rule
         ),
       },
-      run_settings: {
-        ...current.run_settings,
-        sub_runs: {
-          ...(current.run_settings?.sub_runs || {}),
-          [subRun.name]: {
-            ...(current.run_settings?.sub_runs?.[subRun.name] || {}),
-            enabled,
-          },
-        },
-      },
     }));
+  };
+
+  const updateRouterMode = (mainRun: MainRunCatalog, subRun: SubRunCatalog, rule: RouterRule, mode: RouterMode) => {
+    if (mode === 'always') {
+      updateRouterRule(mainRun, subRun, { mode, condition: 'always', condition_settings: {} });
+      return;
+    }
+    const condition = rule.condition === 'always'
+      ? subRun.allowed_conditions.find(candidate => candidate !== 'always') || 'always'
+      : rule.condition;
+    updateRouterRule(mainRun, subRun, {
+      mode,
+      condition,
+      condition_settings: condition === rule.condition
+        ? rule.condition_settings
+        : conditionDefaults(subRun, condition),
+    });
+  };
+
+  const updateRouterCondition = (
+    mainRun: MainRunCatalog,
+    subRun: SubRunCatalog,
+    condition: RouterCondition,
+  ) => {
+    updateRouterRule(mainRun, subRun, {
+      condition,
+      condition_settings: conditionDefaults(subRun, condition),
+    });
   };
 
   const updateWakeInterval = (key: keyof AutopilotConfig['wake_intervals'], value: number) => {
@@ -222,7 +327,10 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config),
       });
-      if (!configRes.ok) throw new Error((await configRes.json()).message || 'Autopilot-Konfiguration konnte nicht gespeichert werden.');
+      if (!configRes.ok) {
+        const error = await configRes.json();
+        throw new Error(`${error.field ? `${error.field}: ` : ''}${error.message || 'Autopilot-Konfiguration konnte nicht gespeichert werden.'}`);
+      }
 
       const quotaRes = await fetch('/api/quota', {
         method: 'POST',
@@ -232,6 +340,7 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
       if (!quotaRes.ok) throw new Error((await quotaRes.json()).message || 'Quota-Konfiguration konnte nicht gespeichert werden.');
 
       setStatus({ type: 'success', message: 'RUN-Konfiguration gespeichert.' });
+      setReviewingSave(false);
       onSave();
     } catch (err) {
       setStatus({ type: 'error', message: err instanceof Error ? err.message : 'Unbekannter Fehler beim Speichern.' });
@@ -239,6 +348,10 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
       setSaving(false);
     }
   };
+
+  const saveSummaries = catalog.main_runs.flatMap(mainRun =>
+    (config.router_rules?.[mainRun.routerKey] || []).map(rule => routerSummary(mainRun, rule)),
+  );
 
   return (
     <div className="space-y-6 animate-in pb-12">
@@ -252,9 +365,9 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
             RUN-Struktur, SUB/PART-RUN Prompts, LLM-Ketten, Provider-Quotas und Governance.
           </p>
         </div>
-        <button onClick={handleSave} disabled={saving} className="btn-primary flex items-center gap-2 w-full sm:w-auto justify-center disabled:opacity-50">
+        <button onClick={() => setReviewingSave(true)} disabled={saving} className="btn-primary flex items-center gap-2 w-full sm:w-auto justify-center disabled:opacity-50">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          {saving ? 'Speichern...' : 'Änderungen speichern'}
+          {saving ? 'Speichern...' : 'Speichern pruefen'}
         </button>
       </div>
 
@@ -264,6 +377,30 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
           <div>
             <div className="font-semibold text-sm">{status.type === 'success' ? 'Gespeichert' : 'Fehler'}</div>
             <div className="text-xs mt-0.5 opacity-90">{status.message}</div>
+          </div>
+        </div>
+      )}
+
+      {reviewingSave && (
+        <div className="rounded-2xl border border-cyan-500/30 bg-cyan-500/5 p-5">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-semibold text-cyan-200">Router-Zusammenfassung vor dem Speichern</h3>
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+                {saveSummaries.map(summary => (
+                  <div key={summary} className="text-xs text-slate-300 font-mono">{summary}</div>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button type="button" onClick={() => setReviewingSave(false)} disabled={saving} className="btn-secondary text-xs">
+                Abbrechen
+              </button>
+              <button type="button" onClick={handleSave} disabled={saving} className="btn-primary flex items-center gap-2 text-xs disabled:opacity-50">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Jetzt speichern
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -343,8 +480,17 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                 {isOpen && (
                   <div className="border-t border-slate-800 p-4 space-y-3">
                     {mainRun.sub_runs.map(subRun => {
-                      const subSettings = settingWithFallback(config.run_settings?.sub_runs?.[subRun.name], subRun.description, subRun.system_prompt);
-                      const subEnabled = (config.router_rules?.[mainRun.routerKey] || []).find(rule => rule.script === subRun.script || rule.name === subRun.label)?.enabled !== false;
+                      const rule: RouterRule = (config.router_rules?.[mainRun.routerKey] || []).find(candidate => candidate.id === subRun.id) || {
+                        id: subRun.id,
+                        name: subRun.label,
+                        script: subRun.script,
+                        enabled: subRun.enabled,
+                        mode: subRun.mode,
+                        condition: subRun.condition,
+                        condition_settings: subRun.condition_settings,
+                        dashboard_editable: subRun.dashboard_editable,
+                      };
+                      const numericSettings = subRun.condition_settings_schemas[rule.condition] || {};
                       const subOpen = expandedSub[subRun.name] || false;
                       return (
                         <div key={subRun.name} className="rounded-lg border border-slate-800 bg-slate-900/40">
@@ -360,19 +506,85 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                               <label className="flex items-center gap-2 text-xs text-slate-300">
                                 <input
                                   type="checkbox"
-                                  checked={subEnabled}
-                                  onChange={event => updateSubEnabled(mainRun, subRun, event.target.checked)}
+                                  checked={rule.enabled}
+                                  disabled={!rule.dashboard_editable}
+                                  onChange={event => updateRouterRule(mainRun, subRun, { enabled: event.target.checked })}
                                   className="w-3.5 h-3.5 rounded border-slate-700 bg-slate-900 text-cyan-600"
                                 />
-                                SUB aktiv
+                                Aktiv
                               </label>
                             </div>
 
-                            <RunUnitFields
-                              settings={subSettings}
-                              providerKeys={providerKeys}
-                              onChange={patch => updateRunSetting('sub_runs', subRun.name, patch)}
-                            />
+                            <div className="grid grid-cols-1 xl:grid-cols-[minmax(280px,1fr)_minmax(220px,0.8fr)_minmax(180px,0.6fr)] gap-3">
+                              <div>
+                                <label className="block text-[10px] uppercase tracking-wide text-slate-500 mb-1">Modus</label>
+                                <div className="grid grid-cols-3 rounded-lg border border-slate-700 bg-slate-950/50 p-1">
+                                  {ROUTER_MODES.map(mode => (
+                                    <button
+                                      key={mode.value}
+                                      type="button"
+                                      disabled={!rule.dashboard_editable}
+                                      onClick={() => updateRouterMode(mainRun, subRun, rule, mode.value)}
+                                      className={`rounded-md px-2 py-1.5 text-[11px] transition-colors ${
+                                        rule.mode === mode.value
+                                          ? 'bg-cyan-500/20 text-cyan-200 shadow-sm'
+                                          : 'text-slate-400 hover:text-slate-200'
+                                      }`}
+                                    >
+                                      {mode.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-[10px] uppercase tracking-wide text-slate-500 mb-1">Condition</label>
+                                <select
+                                  value={rule.condition}
+                                  disabled={!rule.dashboard_editable || rule.mode === 'always'}
+                                  onChange={event => updateRouterCondition(mainRun, subRun, event.target.value as RouterCondition)}
+                                  className="input-field py-1.5 text-xs"
+                                >
+                                  {subRun.allowed_conditions.map(condition => (
+                                    <option key={condition} value={condition}>{CONDITION_LABELS[condition]}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              {Object.entries(numericSettings).map(([settingKey, definition]) => (
+                                <div key={settingKey}>
+                                  <label className="block text-[10px] uppercase tracking-wide text-slate-500 mb-1">{definition.label}</label>
+                                  <input
+                                    type="number"
+                                    min={definition.min}
+                                    max={definition.max}
+                                    step={definition.step}
+                                    value={rule.condition_settings[settingKey as keyof RouterConditionSettings] ?? definition.default}
+                                    disabled={!rule.dashboard_editable}
+                                    onChange={event => updateRouterRule(mainRun, subRun, {
+                                      condition_settings: {
+                                        ...rule.condition_settings,
+                                        [settingKey]: Number.parseInt(event.target.value, 10),
+                                      },
+                                    })}
+                                    className="input-field py-1.5 text-xs"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="grid grid-cols-1 xl:grid-cols-[90px_1fr] gap-3">
+                              <div>
+                                <label className="block text-[10px] uppercase tracking-wide text-slate-500 mb-1">ID</label>
+                                <input readOnly value={rule.id} className="input-field py-1.5 text-xs font-mono text-slate-500 cursor-not-allowed" />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] uppercase tracking-wide text-slate-500 mb-1">Script</label>
+                                <input readOnly value={rule.script} className="input-field py-1.5 text-xs font-mono text-slate-500 cursor-not-allowed" />
+                              </div>
+                            </div>
+
+                            <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-3 py-2 text-xs text-cyan-100">
+                              {routerSummary(mainRun, rule)}
+                            </div>
                           </div>
 
                           {subOpen && (

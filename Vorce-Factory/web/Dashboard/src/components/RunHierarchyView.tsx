@@ -4,17 +4,17 @@ import type { RunHierarchyData, RunHierarchyMain, RunHierarchyPart, RunHierarchy
 
 type NodeKind = 'main' | 'sub' | 'part';
 
-type HierarchyNode =
+export type RunHierarchyNode =
   | { kind: 'main'; id: string; main: RunHierarchyMain }
   | { kind: 'sub'; id: string; main: RunHierarchyMain; sub: RunHierarchySub }
   | { kind: 'part'; id: string; main: RunHierarchyMain; sub: RunHierarchySub; part: RunHierarchyPart };
 
 interface RunHierarchyViewProps {
   runHierarchy?: RunHierarchyData | null;
-  onNodeClick?: (node: HierarchyNode) => void;
+  onNodeClick?: (node: RunHierarchyNode) => void;
   expandedNodes?: Set<string>;
   onToggleNode?: (nodeId: string) => void;
-  onSelectFile?: (filePath: string) => void;
+  onSelectFile?: (filePath: string, node: RunHierarchyNode) => void;
 }
 
 function statusIcon(status: string) {
@@ -115,12 +115,13 @@ export function RunHierarchyView({
   const tree = runHierarchy?.main_runs || [];
   const legacyCount = runHierarchy?.legacy_orphan_states?.length || 0;
 
-  const isExpanded = (nodeId: string, forceOpen = false) =>
-    forceOpen || localExpandedNodes.has(nodeId) || expandedNodes.has(nodeId);
+  const isExpanded = (nodeId: string) =>
+    onToggleNode ? expandedNodes.has(nodeId) : localExpandedNodes.has(nodeId);
 
   const renderPart = (main: RunHierarchyMain, sub: RunHierarchySub, part: RunHierarchyPart) => {
     const id = `${main.name}::${sub.name}::${part.name}`;
     const clickable = Boolean(part.latest_state_path);
+    const node: RunHierarchyNode = { kind: 'part', id, main, sub, part };
 
     return (
       <div
@@ -147,7 +148,7 @@ export function RunHierarchyView({
         {clickable && (
           <button
             type="button"
-            onClick={() => onSelectFile?.(part.latest_state_path || '')}
+            onClick={() => onSelectFile?.(part.latest_state_path || '', node)}
             className="text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-700 px-2 py-1 rounded transition-colors"
             title="JSON-State öffnen"
           >
@@ -161,6 +162,7 @@ export function RunHierarchyView({
   const renderSub = (main: RunHierarchyMain, sub: RunHierarchySub) => {
     const id = `${main.name}::${sub.name}`;
     const open = isExpanded(id);
+    const node: RunHierarchyNode = { kind: 'sub', id, main, sub };
     const activeCount = sub.part_runs.filter(part => part.runtime_status !== 'skipped').length;
     const statusText =
       !sub.configured_enabled ? 'config-disabled' :
@@ -174,7 +176,7 @@ export function RunHierarchyView({
           style={{ marginLeft: 24 }}
           onClick={() => {
             toggleNode(id);
-            onNodeClick?.({ kind: 'sub', id, main, sub });
+            onNodeClick?.(node);
           }}
         >
           <button
@@ -209,7 +211,7 @@ export function RunHierarchyView({
               type="button"
               onClick={(event) => {
                 event.stopPropagation();
-                onSelectFile?.(sub.latest_state_path || '');
+                onSelectFile?.(sub.latest_state_path || '', node);
               }}
               className="text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-700 px-2 py-1 rounded transition-colors"
               title="JSON-State öffnen"
@@ -230,6 +232,7 @@ export function RunHierarchyView({
   const renderMain = (main: RunHierarchyMain) => {
     const id = main.name;
     const open = isExpanded(id);
+    const node: RunHierarchyNode = { kind: 'main', id, main };
 
     return (
       <div key={id} className="rounded-xl border border-slate-800 bg-slate-900/40 overflow-hidden">
@@ -237,7 +240,7 @@ export function RunHierarchyView({
           className="flex items-center gap-2 py-3 px-3 cursor-pointer hover:bg-slate-800/50 transition-colors"
           onClick={() => {
             toggleNode(id);
-            onNodeClick?.({ kind: 'main', id, main });
+            onNodeClick?.(node);
           }}
         >
           <button
@@ -271,7 +274,7 @@ export function RunHierarchyView({
               type="button"
               onClick={(event) => {
                 event.stopPropagation();
-                onSelectFile?.(main.latest_state_path || '');
+                onSelectFile?.(main.latest_state_path || '', node);
               }}
               className="text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-700 px-2 py-1 rounded transition-colors"
               title="JSON-State öffnen"

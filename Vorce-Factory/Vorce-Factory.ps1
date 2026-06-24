@@ -1,10 +1,11 @@
-# Vorce-Factory.ps1 (Vorce 3.0)
-# Haupt-Einstiegspunkt für den VORCE Factory Loop
+﻿# Vorce-Factory.ps1 (Vorce 3.0)
+# Haupt-Einstiegspunkt fÃ¼r den VORCE Factory Loop
 [CmdletBinding()]
 param(
     [switch]$DryRun,
     [switch]$RunOnce,
     [switch]$StartupSequence,
+    [string]$ResumeRunId,
     [int]$StartupDelaySeconds = 8,
     [int]$IntervalMinutes = 15,
     [ValidateSet(
@@ -28,6 +29,8 @@ $LogDir = Join-Path $global:VarDir "log"
 $DbDir  = Join-Path $global:VarDir "db"
 
 . (Join-Path $global:LibDir "utils/StatusPrinter.ps1")
+. (Join-Path $global:LibDir "logging/Write-Log.ps1")
+
 . (Join-Path $global:LibDir "state/StateManager.ps1")
 
 # --- Health-Check ---
@@ -53,9 +56,9 @@ function Clean-TmpFiles {
         foreach ($file in $oldFiles) {
             try {
                 Remove-Item $file.FullName -Force
-                Write-VorceStep -Message "Gelöscht: $($file.Name)" -Status "INFO"
+                Write-VorceStep -Message "GelÃ¶scht: $($file.Name)" -Status "INFO"
             } catch {
-                Write-VorceStep -Message "Konnte $($file.Name) nicht löschen: $($_.Exception.Message)" -Status "WARN"
+                Write-VorceStep -Message "Konnte $($file.Name) nicht lÃ¶schen: $($_.Exception.Message)" -Status "WARN"
             }
         }
     }
@@ -65,7 +68,7 @@ function Enable-DebugMode {
     param([bool]$Enabled)
     $script:debugMode = $Enabled
 
-    # Lade Config für Debug-Einstellungen
+    # Lade Config fÃ¼r Debug-Einstellungen
     $configPath = Join-Path $global:VarDir "config/autopilot-config.json"
     if (Test-Path $configPath) {
         try {
@@ -82,14 +85,6 @@ function Enable-DebugMode {
 # Globale Debug-Flag initialisieren
 $script:debugMode = $false
 
-# --- Rolling Log System ---
-function Rotate-Logs {
-    if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir -Force | Out-Null }
-    $logs = Get-ChildItem -Path $LogDir -Filter "autopilot_*.log" | Sort-Object LastWriteTime -Descending
-    if ($logs.Count -ge 10) {
-        $logs[9..($logs.Count-1)] | Remove-Item -Force
-    }
-}
 
 $Timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm"
 $LogPath = Join-Path $LogDir "autopilot_$Timestamp.log"
@@ -103,10 +98,10 @@ function Write-VorceLog {
 }
 
 Enable-DebugMode -Enabled $false
-Write-VorceLog "Führe Startup Cleanup aus..." -Status "RUN"
+Write-VorceLog "FÃ¼hre Startup Cleanup aus..." -Status "RUN"
 Clean-TmpFiles -MaxAgeHours 24
 
-Write-VorceHeader -Title "VORCE FACTORY 3.0" -Icon "🏭"
+Write-VorceHeader -Title "VORCE FACTORY 3.0" -Icon "ðŸ­"
 
 # --- 3. Initialisierung ---
 Write-VorceLog "Lade Konfiguration..." -Status "INFO"
@@ -120,7 +115,10 @@ $GlobalState = Read-VorceGlobalState
 Write-VorceLog "Global State geladen (v$($GlobalState.version))." -Status "OK"
 
 function Invoke-VorceOrchestrator {
-    param([string]$MainRunName)
+    param(
+        [string]$MainRunName,
+        [string]$RunId
+    )
 
     $orchestratorPath = Join-Path $global:VorceRoot "src/orchestrator/Vorce-Orchestrator.ps1"
     if (-not (Test-Path $orchestratorPath)) {
@@ -129,7 +127,9 @@ function Invoke-VorceOrchestrator {
     }
 
     $GlobalState = Read-VorceGlobalState
-    if ([string]::IsNullOrWhiteSpace($MainRunName)) {
+    if ($RunId) {
+        & $orchestratorPath -GlobalState $GlobalState -DryRun:$DryRun -ResumeRunId $RunId
+    } elseif ([string]::IsNullOrWhiteSpace($MainRunName)) {
         & $orchestratorPath -GlobalState $GlobalState -DryRun:$DryRun
     } else {
         & $orchestratorPath -GlobalState $GlobalState -DryRun:$DryRun -ForceMainRun $MainRunName
@@ -157,7 +157,17 @@ if ($StartupSequence -and -not $ForceMainRun) {
 
 while ($true) {
     try {
-        Invoke-VorceOrchestrator -MainRunName $ForceMainRun
+        $effectiveResumeRunId = $ResumeRunId
+        if (-not $effectiveResumeRunId -and -not $ForceMainRun) {
+            $resumable = Get-VorceResumableMainRun
+            if ($resumable) { $effectiveResumeRunId = [string]$resumable.id }
+Enable-DebugMode -Enabled $false
+Write-VorceStep -Message "FÃ¼hre Startup Cleanup aus..." -Status "RUN"
+Clean-TmpFiles -MaxAgeHours 24
+
+        }
+        Invoke-VorceOrchestrator -MainRunName $ForceMainRun -RunId $effectiveResumeRunId
+        $ResumeRunId = $null
 
     } catch {
         Write-VorceLog "[CRITICAL] Fehler im Loop: $($_.Exception.Message)" -Status "ERROR"

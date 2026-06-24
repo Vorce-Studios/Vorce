@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, CalendarClock, Ban, MessageSquare, Play, CheckCircle, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue, AuditResult } from '../types';
+import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue, AuditResult, RunHierarchyData, JulesSession, AuditParsed } from '../types';
 import DeliberationPanel from './DeliberationPanel';
-import { RunHierarchyView } from '../components/RunHierarchyView';
+import { RunHierarchyView, type RunHierarchyNode } from '../components/RunHierarchyView';
 import type { RunSummary } from '../types';
 
 interface Props {
@@ -11,9 +11,9 @@ interface Props {
   sessions: ActiveSessions;
   pullRequests: PullRequest[];
   issues: GitHubIssue[];
-  julesSessions?: any[];
-  auditResult?: AuditResult;
-  runHierarchy?: any;
+  julesSessions?: JulesSession[];
+  auditResult?: AuditResult | null;
+  runHierarchy?: RunHierarchyData | null;
   runSummary?: RunSummary;
 }
 
@@ -97,7 +97,7 @@ async function updateAuditAlert(action: string, id: string, response?: string) {
   });
 }
 
-function parseAuditResult(auditResult?: AuditResult) {
+function parseAuditResult(auditResult?: AuditResult | null): AuditParsed | null {
   if (!auditResult) return null;
   if (auditResult.parsed) return auditResult.parsed;
   if (!auditResult.response) return null;
@@ -108,12 +108,12 @@ function parseAuditResult(auditResult?: AuditResult) {
     .trim();
 
   try {
-    return JSON.parse(cleaned);
+    return JSON.parse(cleaned) as AuditParsed;
   } catch {
     const match = cleaned.match(/\{[\s\S]*\}/);
     if (!match) return null;
     try {
-      return JSON.parse(match[0]);
+      return JSON.parse(match[0]) as AuditParsed;
     } catch {
       return null;
     }
@@ -137,6 +137,10 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
   const [commentDraft, setCommentDraft] = useState<string>('');
   const [expandedRunNodes, setExpandedRunNodes] = useState<Set<string>>(new Set());
+  const [selectedRunDetails, setSelectedRunDetails] = useState<{
+    state_path: string;
+    node: RunHierarchyNode;
+  } | null>(null);
 
   const activeAlerts = sessions.decisions_pending?.filter(a => a.status !== 'closed' && a.status !== 'ignored') || [];
 
@@ -156,16 +160,13 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
     });
   };
 
-  const handleRunNodeClick = (runState: any) => {
-    // Log the run state details for debugging
-    console.log('Run state clicked:', runState);
-    // In a real implementation, this would open a detailed view or modal
+  const handleRunNodeClick = () => {
+    setSelectedRunDetails(null);
   };
 
-  const handleSelectFile = (filePath: string) => {
+  const handleSelectFile = (filePath: string, node: RunHierarchyNode) => {
     if (!filePath) return;
-    console.log('Opening JSON file:', filePath);
-    alert(`Öffne JSON-Datei: ${filePath}`);
+    setSelectedRunDetails({ state_path: filePath, node });
   };
 
   const toggleRunNode = (nodeId: string) => {
@@ -202,9 +203,9 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   const openPRs = prArray.filter(pr => pr.repo?.includes('Vorce') && pr.state === 'OPEN' && pr.isDraft !== true).length;
   const conflictingPRs = prArray.filter(pr => pr.repo?.includes('Vorce') && pr.state === 'OPEN' && pr.isDraft !== true && pr.mergeable === 'CONFLICTING').length;
   const hierarchyMainCount = runHierarchy?.main_runs?.length || 0;
-  const hierarchySubCount = runHierarchy?.main_runs?.reduce((sum: number, main: any) => sum + (main.sub_runs?.length || 0), 0) || 0;
+  const hierarchySubCount = runHierarchy?.main_runs?.reduce((sum, main) => sum + main.sub_runs.length, 0) || 0;
   const hierarchyPartCount = runHierarchy?.main_runs?.reduce(
-    (sum: number, main: any) => sum + (main.sub_runs || []).reduce((subSum: number, sub: any) => subSum + (sub.part_runs?.length || 0), 0),
+    (sum, main) => sum + main.sub_runs.reduce((subSum, sub) => subSum + sub.part_runs.length, 0),
     0
   ) || 0;
 
@@ -219,6 +220,29 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
 
   return (
     <div className="space-y-6 animate-in">
+      {selectedRunDetails && (
+        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-4xl max-h-[82vh] overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-2xl">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-100">Run-State Details</h3>
+                <p className="text-xs text-slate-500">{selectedRunDetails.state_path}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedRunDetails(null)}
+                className="rounded-md border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
+              >
+                Schließen
+              </button>
+            </div>
+            <pre className="max-h-[68vh] overflow-auto p-4 text-xs text-slate-300 bg-slate-900/65">
+              {JSON.stringify(selectedRunDetails, null, 2)}
+            </pre>
+          </div>
+        </div>
+      )}
+
       {/* Status Banner */}
       <div className="glass-card p-6">
         <div className="flex items-center justify-between">
@@ -623,7 +647,11 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
         queue={sessions.optimizer_queue}
         lastRun={sessions.optimizer_last_run}
         lastOptimizerAt={sessions.last_optimizer_analysis_at}
-        forceRequestedAt={runControl.force_optimizer_requested_at}
+        forceRequestedAt={
+          typeof runControl.force_optimizer_requested_at === 'string'
+            ? runControl.force_optimizer_requested_at
+            : undefined
+        }
       />
 
       {/* Dual-CEO Deliberation Panel */}
@@ -992,11 +1020,13 @@ function RunSummaryPanel({ summary }: { summary?: RunSummary }) {
                   <div>{run.completed_at ? timeAgo(run.completed_at) : ''}</div>
                 </div>
               </div>
-              <div className="mt-2 grid grid-cols-4 gap-2 text-[10px] text-slate-400">
+              <div className="mt-2 grid grid-cols-3 sm:grid-cols-6 gap-2 text-[10px] text-slate-400">
                 <span>SUB {run.sub_runs.completed}/{run.sub_runs.failed}/{run.sub_runs.reused}</span>
                 <span>PART {run.part_runs.completed}/{run.part_runs.failed}/{run.part_runs.reused}</span>
                 <span>Fallbacks {run.fallbacks}</span>
                 <span>Attempts {run.provider_attempts}</span>
+                <span>Resume {run.resume_count}</span>
+                <span>No work {run.no_work}</span>
               </div>
             </div>
           ))}

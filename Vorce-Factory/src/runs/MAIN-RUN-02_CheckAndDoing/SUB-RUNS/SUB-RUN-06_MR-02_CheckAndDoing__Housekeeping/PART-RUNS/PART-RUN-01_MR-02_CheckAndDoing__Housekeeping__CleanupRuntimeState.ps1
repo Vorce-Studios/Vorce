@@ -1,38 +1,62 @@
-# SUB-RUN-06_Housekeeping.ps1 (Vorce 3.0)
-# Bereinigt abgeschlossene Delegierungen, räumt tmp/ auf und aktualisiert Statistiken
+# CleanupRuntimeState.ps1 (Vorce 3.0)
+# Updates housekeeping state and delegates all filesystem retention centrally.
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][hashtable]$ConfigBag,
     [Parameter(Mandatory)][object]$ParentState
 )
 
-# Setze globale Variablen basierend auf ConfigBag
 $global:VorceRoot = $ConfigBag.VorceRoot
 $global:VarDir = $ConfigBag.VarDir
 $global:LibDir = $ConfigBag.LibDir
 
-# Lade benötigte Module
-. (Join-Path $global:LibDir "utils/StatusPrinter.ps1")
-. (Join-Path $global:LibDir "state/StateManager.ps1")
+. (Join-Path $global:LibDir 'utils/StatusPrinter.ps1')
+. (Join-Path $global:LibDir 'state/StateManager.ps1')
+. (Join-Path $global:LibDir 'maintenance/RetentionManager.ps1')
 
-Write-VorceStep -Message "Starte Housekeeping..." -Status "RUN"
+function Get-HousekeepingStat {
+    param([Parameter(Mandatory)][string]$Name)
 
-# 1. Bereinige abgeschlossene Delegierungen aus active_delegations
-if ($ConfigBag.GlobalState.PSObject.Properties.Name -contains "active_delegations") {
-    $originalCount = $ConfigBag.GlobalState.active_delegations.Count
+    if ($ConfigBag.GlobalState.stats -is [System.Collections.IDictionary]) {
+        if ($ConfigBag.GlobalState.stats.Contains($Name)) {
+            return $ConfigBag.GlobalState.stats[$Name]
+        }
+        return $null
+    }
+    $property = $ConfigBag.GlobalState.stats.PSObject.Properties[$Name]
+    if ($property) { return $property.Value }
+    return $null
+}
+
+function Set-HousekeepingStat {
+    param(
+        [Parameter(Mandatory)][string]$Name,
+        [AllowNull()][object]$Value
+    )
+
+    if ($ConfigBag.GlobalState.stats -is [System.Collections.IDictionary]) {
+        $ConfigBag.GlobalState.stats[$Name] = $Value
+    } else {
+        $ConfigBag.GlobalState.stats |
+            Add-Member -MemberType NoteProperty -Name $Name -Value $Value -Force
+    }
+}
+
+Write-VorceStep -Message 'Starte Housekeeping...' -Status 'RUN'
+
+$completedDelegations = @()
+$remainingDelegations = @()
+if ($ConfigBag.GlobalState.PSObject.Properties.Name -contains 'active_delegations') {
     $completedDelegations = @($ConfigBag.GlobalState.active_delegations | Where-Object {
-        $_.status -eq "completed" -or $_.status -eq "merged" -or $_.status -eq "closed"
+        $_.status -in @('completed', 'merged', 'closed')
     })
     $remainingDelegations = @($ConfigBag.GlobalState.active_delegations | Where-Object {
-        $_.status -ne "completed" -and $_.status -ne "merged" -and $_.status -ne "closed"
+        $_.status -notin @('completed', 'merged', 'closed')
     })
 
-    if ($completedDelegations.Count -gt 0) {
-        Write-VorceStep -Message "Bereinige $($completedDelegations.Count) abgeschlossene Delegierungen" -Status "INFO"
-
-        # Speichere Bereinigungsinformationen
+    if ($completedDelegations.Count -gt 0 -and -not [bool]$ConfigBag.DryRun) {
         $cleanupReport = @{
-            timestamp = (Get-Date).ToString("o")
+            timestamp = (Get-Date).ToString('o')
             removed_delegations = @($completedDelegations | ForEach-Object {
                 @{
                     issueNumber = $_.issueNumber
@@ -42,103 +66,75 @@ if ($ConfigBag.GlobalState.PSObject.Properties.Name -contains "active_delegation
                 }
             })
         }
-
-        # Speichere Cleanup-Report
-        $cleanupDir = Join-Path $global:VarDir "db/completed_delegations"
-        if (-not (Test-Path $cleanupDir)) {
-            New-Item -ItemType Directory -Path $cleanupDir -Force | Out-Null
-        }
+        $cleanupDir = Join-Path $global:VarDir 'db/completed_delegations'
+        $null = New-Item -ItemType Directory -Path $cleanupDir -Force
         $cleanupReportFile = Join-Path $cleanupDir "cleanup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
-        $cleanupReport | ConvertTo-Json -Depth 10 | Set-Content $cleanupReportFile -Encoding UTF8
-
-        # Aktualisiere active_delegations
+        $cleanupReport | ConvertTo-Json -Depth 10 |
+            Set-Content -LiteralPath $cleanupReportFile -Encoding UTF8
         $ConfigBag.GlobalState.active_delegations = $remainingDelegations
-        Write-VorceStep -Message "Aktualisiere active_delegations: $originalCount → $($remainingDelegations.Count)" -Status "OK"
     }
 }
 
-# 2. Räume var/tmp/ auf (Dateien älter als 24h)
-$tmpDir = Join-Path $global:VarDir "tmp"
-if (Test-Path $tmpDir) {
-    Write-VorceStep -Message "Bereinige var/tmp/ (Dateien älter als 24h)" -Status "INFO"
+$policyPath = Join-Path $global:VarDir 'config/retention-policy.json'
+$retentionReport = Invoke-VorceRetention `
+    -VarRoot $global:VarDir `
+    -PolicyPath $policyPath `
+    -DryRun ([bool]$ConfigBag.DryRun) `
+    -Confirm:$false
 
-    $cutoffTime = (Get-Date).AddHours(-24)
-    $oldFiles = Get-ChildItem -Path $tmpDir -File | Where-Object { $_.CreationTime -lt $cutoffTime }
-
-    if ($oldFiles.Count -gt 0) {
-        foreach ($file in $oldFiles) {
-            try {
-                Remove-Item $file.FullName -Force
-                Write-VorceStep -Message "Gelöscht: $($file.Name)" -Status "INFO"
-            } catch {
-                Write-VorceStep -Message "Konnte $($file.Name) nicht löschen: $($_.Exception.Message)" -Status "WARN"
-            }
-        }
-    } else {
-        Write-VorceStep -Message "Keine alten Dateien in var/tmp/" -Status "INFO"
-    }
+if ($retentionReport.status -in @('safety_blocked', 'completed_with_warnings')) {
+    Write-VorceStep -Message "Retention beendet mit Status '$($retentionReport.status)'." -Status 'WARN'
+} else {
+    Write-VorceStep -Message (
+        'Retention: {0} geloescht, {1} komprimiert, {2} rotiert, {3} geschuetzt.' -f
+        $retentionReport.totals.deleted,
+        $retentionReport.totals.compressed,
+        $retentionReport.totals.rotated,
+        $retentionReport.totals.protected
+    ) -Status 'OK'
 }
 
-# 3. Aktualisiere Statistiken in global-state.json
-if (-not $ConfigBag.GlobalState.PSObject.Properties.Name -contains "stats") {
-    $ConfigBag.GlobalState | Add-Member -MemberType NoteProperty -Name "stats" -Value @{
+if ($ConfigBag.GlobalState.PSObject.Properties.Name -notcontains 'stats') {
+    $ConfigBag.GlobalState | Add-Member -MemberType NoteProperty -Name 'stats' -Value @{
         total_runs = 0
         successful_runs = 0
         failed_runs = 0
         total_issues_processed = 0
         total_delegations_created = 0
-        last_housekeeping = (Get-Date).ToString("o")
+        last_housekeeping = (Get-Date).ToString('o')
     }
 }
 
-# Aktualisiere Statistiken
-$ConfigBag.GlobalState.stats.last_housekeeping = (Get-Date).ToString("o")
-$ConfigBag.GlobalState.stats.total_runs++
-
-# Aktualisiere andere Statistiken basierend auf aktivitäten
+Set-HousekeepingStat -Name 'last_housekeeping' -Value (Get-Date).ToString('o')
+Set-HousekeepingStat -Name 'total_runs' -Value ([int](Get-HousekeepingStat -Name 'total_runs') + 1)
 if ($ParentState.reviews) {
-    $ConfigBag.GlobalState.stats.total_reviews_dispatched += $ParentState.reviews.Count
+    $currentReviews = [int](Get-HousekeepingStat -Name 'total_reviews_dispatched')
+    Set-HousekeepingStat -Name 'total_reviews_dispatched' `
+        -Value ($currentReviews + @($ParentState.reviews).Count)
 }
-
 if ($ParentState.agents) {
-    $unhealthyAgents = @($ParentState.agents.Values | Where-Object { $_.status -ne "running" })
+    $unhealthyAgents = @($ParentState.agents.Values | Where-Object { $_.status -ne 'running' })
     if ($unhealthyAgents.Count -gt 0) {
-        $ConfigBag.GlobalState.stats.unhealthy_agent_sessions += $unhealthyAgents.Count
+        $currentUnhealthy = [int](Get-HousekeepingStat -Name 'unhealthy_agent_sessions')
+        Set-HousekeepingStat -Name 'unhealthy_agent_sessions' `
+            -Value ($currentUnhealthy + $unhealthyAgents.Count)
     }
 }
 
-# 4. Räume abgelaufene Session Locks auf
-$lockDir = Join-Path $global:VarDir "tmp/session.lock"
-if (Test-Path $lockDir) {
-    $oldLocks = Get-ChildItem -Path $lockDir -File | Where-Object {
-        ($_.CreationTime -lt $cutoffTime) -or ($_.Name -like "*.lock")
-    }
-
-    if ($oldLocks.Count -gt 0) {
-        foreach ($lock in $oldLocks) {
-            try {
-                Remove-Item $lock.FullName -Force
-                Write-VorceStep -Message "Gelöscht: Session Lock $($lock.Name)" -Status "INFO"
-            } catch {
-                Write-VorceStep -Message "Konnte Session Lock $($lock.Name) nicht löschen: $($_.Exception.Message)" -Status "WARN"
-            }
-        }
-    }
+if (-not [bool]$ConfigBag.DryRun) {
+    Save-VorceGlobalState -State $ConfigBag.GlobalState
 }
 
-# 5. Speichere aktualisierten GlobalState
-Save-VorceGlobalState -State $ConfigBag.GlobalState
-
-# 6. Gib State mit Bereinigungsinformationen zurück
 $housekeepingResult = @{
-    status = "completed"
-    cleaned_delegations = $completedDelegations.Count
-    tmp_files_cleaned = $oldFiles.Count
-    session_locks_cleaned = $oldLocks.Count
-    stats_updated = $true
-    next_housekeeping = (Get-Date).AddHours(24).ToString("o")
-    timestamp = (Get-Date).ToString("o")
+    status = if ($retentionReport.status -eq 'safety_blocked') { 'completed_with_warnings' } else { 'completed' }
+    cleaned_delegations = if ([bool]$ConfigBag.DryRun) { 0 } else { $completedDelegations.Count }
+    retention = $retentionReport
+    tmp_files_cleaned = $retentionReport.totals.deleted
+    session_locks_cleaned = 0
+    stats_updated = -not [bool]$ConfigBag.DryRun
+    next_housekeeping = (Get-Date).AddHours(24).ToString('o')
+    timestamp = (Get-Date).ToString('o')
 }
 
-Write-VorceStep -Message "Housekeeping abgeschlossen: $($housekeepingResult.cleaned_delegations) Delegierungen, $($housekeepingResult.tmp_files_cleaned) tmp-Files bereinigt." -Status "OK"
+Write-VorceStep -Message 'Housekeeping abgeschlossen.' -Status 'OK'
 return $housekeepingResult
