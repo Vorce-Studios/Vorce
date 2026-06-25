@@ -1,13 +1,16 @@
 const WebSocket = require('ws');
 const fs = require('fs');
 const path = require('path');
+const A2AServer = require('./A2AServer');
 
 class WebSocketServer {
-    constructor(host = 'localhost', port = 5174) {
+    constructor(host = 'localhost', port = 5174, a2aPort = 5175) {
         this.host = host;
         this.port = port;
+        this.a2aPort = a2aPort;
         this.server = null;
         this.clients = new Set();
+        this.a2aServer = null;
         this.dbPath = path.join(__dirname, '../../../var/db');
         this.runStatesPath = path.join(__dirname, '../../../var/run-states');
         this.logPath = path.join(__dirname, '../../../var/log/autopilot.log');
@@ -46,6 +49,21 @@ class WebSocketServer {
         });
 
         console.log(`[WebSocket] Server gestartet auf ws://${this.host}:${this.port}`);
+
+        // ── Start A2A Express server ──
+        this._startA2AServer();
+    }
+
+    /**
+     * Start the A2A Express server (non-blocking if express is missing).
+     */
+    _startA2AServer() {
+        try {
+            this.a2aServer = new A2AServer(this, this.a2aPort);
+            this.a2aServer.start();
+        } catch (err) {
+            console.error('[WebSocket] A2A-Server-Start fehlgeschlagen:', err.message);
+        }
     }
 
     sendToClient(client, data) {
@@ -172,6 +190,9 @@ class WebSocketServer {
     }
 
     stop() {
+        if (this.a2aServer) {
+            this.a2aServer.stop();
+        }
         if (this.server) {
             this.server.close();
             this.clients.forEach(client => {
@@ -182,6 +203,9 @@ class WebSocketServer {
         }
     }
 }
+
+// Export for reuse (e.g. by tests)
+module.exports = WebSocketServer;
 
 // Starte den Server
 const server = new WebSocketServer(process.argv[2] || 'localhost', parseInt(process.argv[3]) || 5174);

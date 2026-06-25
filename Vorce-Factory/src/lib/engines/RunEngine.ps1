@@ -1,6 +1,11 @@
 # RunEngine.ps1 (Vorce 3.0)
 # Modul zur Ausfuehrung von PART-RUNS und SUB-RUNS mit Parallelitaets-Steuerung
 
+
+# Dot-Source A2A Client
+. (Join-Path $PSScriptRoot "../integrations/A2AClient.ps1")
+
+
 function Get-VorceStringHash {
     param([Parameter(Mandatory)][string]$Text)
     $sha = [System.Security.Cryptography.SHA256]::Create()
@@ -149,6 +154,8 @@ function Invoke-VorcePartRun {
     $priorAttemptState = Get-VorcePriorRunAttemptState -MainRunId $mainRunId -RunName $PartName -InputFingerprint $InputFingerprint
     if ($priorAttemptState) { $PartState.attempts = @($priorAttemptState.attempts) }
     $PartState = Set-VorceStateRunning -State $PartState
+    $global:MainRunId = if ($ParentState -and $ParentState.main_run_id) { $ParentState.main_run_id } elseif ($ParentState) { $ParentState.id } else { $null }
+    Send-VorceA2AMessage -TargetAgent "Dashboard" -MessageType "TaskProgress" -Payload @{ runId = $PartState.id; name = $PartName; status = "started" } -CorrelationId $global:MainRunId
     Save-VorceRunState -State $PartState | Out-Null
     Write-VorceRunStart -RunName $PartName -Level Part
     Write-VorceStep -Message "Fuehre Part-Run aus: $PartName" -Status "RUN"
@@ -182,6 +189,8 @@ function Invoke-VorcePartRun {
             $PartState = Set-VorceStateWaitingProvider -State $PartState -RetryAfter $result.retry_after -BlockedPartRun $PartName
             $PartState.results = @($result)
             Write-VorceRunEnd -RunName $PartName -Level Part -Status "waiting_provider"
+            Send-VorceA2AMessage -TargetAgent "Dashboard" -MessageType "TaskProgress" -Payload @{ runId = $PartState.id; name = $PartName; status = "waiting_provider" } -CorrelationId $global:MainRunId
+
         } else {
             $PartState = Set-VorceStateStatus -State $PartState -Status "completed"
             if ($result) {
@@ -196,11 +205,15 @@ function Invoke-VorcePartRun {
             $PartState = Save-VorceRunResultArtifact -State $PartState -Result $result
             $PartState.reusable = $true
             Write-VorceStep -Message "Part-Run $PartName abgeschlossen." -Status "OK"
+            Send-VorceA2AMessage -TargetAgent "Dashboard" -MessageType "TaskProgress" -Payload @{ runId = $PartState.id; name = $PartName; status = "completed" } -CorrelationId $global:MainRunId
+
             Write-VorceRunEnd -RunName $PartName -Level Part -Status "completed"
         }
     } catch {
         $PartState = Set-VorceStateStatus -State $PartState -Status "failed" -Error $_.Exception.Message -ErrorClass "execution_error"
         Write-VorceStep -Message "Fehler in Part-Run ${PartName}: $($_.Exception.Message)" -Status "ERROR"
+        Send-VorceA2AMessage -TargetAgent "Dashboard" -MessageType "TaskProgress" -Payload @{ runId = $PartState.id; name = $PartName; status = "failed" } -CorrelationId $global:MainRunId
+
         Write-VorceRunEnd -RunName $PartName -Level Part -Status "failed"
     }
 
@@ -233,6 +246,7 @@ function Invoke-VorceSubRunParallel {
     $subState = Initialize-RunState -RunName $SubRunName -RunType "SUB" -MainRunId $ParentState.main_run_id -ParentRunId $ParentState.id
     $subState = Set-VorceStateRunning -State $subState
     Save-VorceRunState -State $subState | Out-Null
+    Send-VorceA2AMessage -TargetAgent "Dashboard" -MessageType "TaskProgress" -Payload @{ runId = $subState.id; name = $SubRunName; status = "started" } -CorrelationId $ParentState.main_run_id
     Write-VorceRunStart -RunName $SubRunName -Level Sub
 
     $activeJobs = @()
@@ -350,6 +364,7 @@ function Invoke-VorceSubRunParallel {
     }
 
     Save-VorceRunState -State $subState | Out-Null
+    Send-VorceA2AMessage -TargetAgent "Dashboard" -MessageType "TaskProgress" -Payload @{ runId = $subState.id; name = $SubRunName; status = $subState.status } -CorrelationId $ParentState.main_run_id
     Write-VorceRunEnd -RunName $SubRunName -Level Sub -Status $subState.status
 
     if ($failedParts.Count -gt 0) {
@@ -395,6 +410,7 @@ function Invoke-VorceSubRunSequential {
     $subState = Initialize-RunState -RunName $SubRunName -RunType "SUB" -MainRunId $ParentState.main_run_id -ParentRunId $ParentState.id
     $subState = Set-VorceStateRunning -State $subState
     Save-VorceRunState -State $subState | Out-Null
+    Send-VorceA2AMessage -TargetAgent "Dashboard" -MessageType "TaskProgress" -Payload @{ runId = $subState.id; name = $SubRunName; status = "started" } -CorrelationId $ParentState.main_run_id
     Write-VorceRunStart -RunName $SubRunName -Level Sub
 
     $partStates = @()
@@ -436,6 +452,7 @@ function Invoke-VorceSubRunSequential {
     }
 
     Save-VorceRunState -State $subState | Out-Null
+    Send-VorceA2AMessage -TargetAgent "Dashboard" -MessageType "TaskProgress" -Payload @{ runId = $subState.id; name = $SubRunName; status = $subState.status } -CorrelationId $ParentState.main_run_id
     Write-VorceRunEnd -RunName $SubRunName -Level Sub -Status $subState.status
 
     return @{

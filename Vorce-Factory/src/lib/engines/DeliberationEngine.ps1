@@ -1,6 +1,10 @@
 # DeliberationEngine.ps1 (Vorce 3.0)
 # Fuehrt Proposal, Critique und Synthesis mit validierten Agent-Payloads aus.
 
+# Dot-Source A2A Client
+. (Join-Path $PSScriptRoot "../integrations/A2AClient.ps1")
+
+
 function Get-VorceDeliberationValue {
     param(
         [AllowNull()][object]$Object,
@@ -236,6 +240,7 @@ function Invoke-VorceDeliberation {
     $phases.Add($critiquePhase)
 
     if (-not $critique.success) {
+        Send-VorceA2AMessage -TargetAgent "CEO" -MessageType "CritiqueFeedback" -Payload $critique -CorrelationId $critiqueContext.phase_id
         if ($dualCeo.fallback_to_single -eq $true) {
             Write-VorceStep -Message "Critique nicht verfuegbar. Nutze expliziten Single-Agent-Fallback." -Status "WARN"
             return New-VorceDeliberationOutcome `
