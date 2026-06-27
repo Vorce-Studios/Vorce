@@ -72,13 +72,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Checkout trusted base config
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.resolve.outputs.base_sha }}
           path: base-config
 
       - name: Checkout PR head
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ steps.resolve.outputs.head_repo }}
           ref: ${{ steps.resolve.outputs.head_ref }}
