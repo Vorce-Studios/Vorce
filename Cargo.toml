@@ -44,7 +44,7 @@ criterion = "0.8"
 
 # Concurrency
 crossbeam-channel = "0.5"
-egui = { version = "0.34.3", features = ["serde"] }
+egui = { version = "0.35.0", features = ["serde"] }
 egui-wgpu = "0.34.1"
 egui-winit = "0.34.3"
 egui_extras = { version = "0.34.3", features = ["image", "file", "svg"] }
