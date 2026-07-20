@@ -1049,4 +1049,3 @@ function BuildMemoryUsageStatistics {
         candidate_count = @($analysis.candidate_ids).Count
     }
 }
-
