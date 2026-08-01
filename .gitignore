@@ -107,5 +107,3 @@ test.py
 # Vendor crates (should be managed by workspace)
 # crates/vendor/env_logger/
 # crates/vendor/rusty-spout/
-
-
