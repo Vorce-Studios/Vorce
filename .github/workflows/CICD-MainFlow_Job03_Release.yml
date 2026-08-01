@@ -73,7 +73,7 @@ jobs:
     needs: [resolve-release]
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -95,7 +95,7 @@ jobs:
           Add-Content -Path $env:GITHUB_PATH -Value "$llvmBin"
 
       - name: Cache Cargo Registry
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry/index/
@@ -112,7 +112,7 @@ jobs:
 
       - name: Cache vcpkg
         id: cache-vcpkg
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: vcpkg
           key: ${{ runner.os }}-vcpkg-full-clone-v1-${{ hashFiles('vcpkg.json') }}
@@ -134,7 +134,7 @@ jobs:
 
       - name: Cache vcpkg installed libs
         id: cache-vcpkg-installed
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: vcpkg_installed
           key: ${{ runner.os }}-vcpkg-installed-${{ hashFiles('vcpkg.json') }}
@@ -240,14 +240,14 @@ jobs:
     needs: [resolve-release]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.94.0
 
       - name: Cache Cargo Registry
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry/index/
@@ -290,7 +290,7 @@ jobs:
     needs: [resolve-release]
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -298,7 +298,7 @@ jobs:
           toolchain: 1.94.0
 
       - name: Cache Cargo Registry
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry/index/
@@ -350,7 +350,7 @@ jobs:
     needs: [resolve-release, build-windows, build-linux, build-macos]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Download Artifacts
         uses: actions/download-artifact@v8
         with:
