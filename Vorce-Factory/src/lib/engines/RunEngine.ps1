@@ -179,7 +179,7 @@ function Invoke-VorcePartRun {
                 }
             }
         }
-        
+
         if ($result -and $result.status -eq 'waiting_provider') {
             $PartState.attempts = @($PartState.attempts + @($result.attempts) | Group-Object {
                 if ($_.attempt_id) { $_.attempt_id } else { "$($_.provider)|$($_.error_class)|$($_.exit_code)" }
@@ -218,7 +218,7 @@ function Invoke-VorcePartRun {
     }
 
     Save-VorceRunState -State $PartState | Out-Null
-    
+
     return $PartState
 }
 
