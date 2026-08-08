@@ -269,7 +269,7 @@ jobs:
           }
 
       - name: Checkout merged commit from main
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.resolve-context.outputs.checkout_ref }}
           fetch-depth: 0
