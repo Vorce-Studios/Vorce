@@ -14,6 +14,9 @@ ignore = [
     "RUSTSEC-2025-0141",
     # paste is unmaintained
     "RUSTSEC-2024-0436",
+    # rustybuzz and ttf-parser are unmaintained but not currently exploitable in our usage pattern
+    "RUSTSEC-2026-0206",
+    "RUSTSEC-2026-0192",
 ]
 
 [licenses]
