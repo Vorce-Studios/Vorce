@@ -573,3 +573,79 @@ pub fn model_system() {
 pub fn node_reactivity_system() {
     // Placeholder
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::components::BevyHexGrid;
+    use bevy::asset::AssetPlugin;
+    // use bevy::prelude::*;
+
+    #[test]
+    fn test_hex_grid_system_creates_children() {
+        let mut app = App::new();
+
+        // Add minimal required plugins
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(AssetPlugin::default());
+        app.init_asset::<Mesh>();
+        app.init_asset::<StandardMaterial>();
+
+        // Add system under test
+        app.add_systems(Update, hex_grid_system);
+
+        // Spawn entity with component
+        let entity = app
+            .world_mut()
+            .spawn(BevyHexGrid { radius: 1.0, rings: 2, pointy_top: true, spacing: 0.1 })
+            .id();
+
+        // Run system
+        app.update();
+
+        // Check if children (tiles) were created
+        let children = app.world().get::<Children>(entity).expect("Entity should have children");
+        assert!(!children.is_empty(), "Hex grid should have generated child tiles");
+
+        // For rings=2, formula is 1 + 6*1 + 6*2 = 19 tiles
+        assert_eq!(children.len(), 19, "Expected 19 tiles for a grid with 2 rings");
+    }
+
+    #[test]
+    fn test_hex_grid_system_updates_on_change() {
+        let mut app = App::new();
+
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(AssetPlugin::default());
+        app.init_asset::<Mesh>();
+        app.init_asset::<StandardMaterial>();
+
+        app.add_systems(Update, hex_grid_system);
+
+        let entity = app
+            .world_mut()
+            .spawn(BevyHexGrid {
+                radius: 1.0,
+                rings: 1, // 1 ring = 1 + 6 = 7 tiles
+                pointy_top: true,
+                spacing: 0.1,
+            })
+            .id();
+
+        // First update
+        app.update();
+
+        let children = app.world().get::<Children>(entity).expect("Entity should have children");
+        assert_eq!(children.len(), 7, "Expected 7 tiles for a grid with 1 ring");
+
+        // Modify component
+        let mut hex_grid = app.world_mut().get_mut::<BevyHexGrid>(entity).unwrap();
+        hex_grid.rings = 2; // 2 rings = 19 tiles
+
+        // Second update
+        app.update();
+
+        let children = app.world().get::<Children>(entity).expect("Entity should have children");
+        assert_eq!(children.len(), 19, "Expected 19 tiles after updating rings to 2");
+    }
+}
