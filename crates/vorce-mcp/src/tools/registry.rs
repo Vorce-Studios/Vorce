@@ -539,3 +539,53 @@ pub fn get_tools() -> Vec<Tool> {
         },
     ]
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_tools_contains_basic_tools() {
+        let tools = get_tools();
+
+        assert!(!tools.is_empty(), "get_tools() should return some tools");
+        assert!(tools.len() > 10, "Should have more than 10 tools registered");
+
+        let send_osc = tools.iter().find(|t| t.name == "send_osc");
+        assert!(send_osc.is_some(), "send_osc tool should be registered");
+
+        if let Some(tool) = send_osc {
+            assert!(tool.description.is_some());
+            assert_eq!(tool.description.as_ref().unwrap(), "Send an Open Sound Control (OSC) message to Vorce");
+
+            let schema = &tool.input_schema;
+            assert_eq!(schema["type"], "object");
+            assert!(schema["properties"]["address"].is_object());
+            assert!(schema["properties"]["args"].is_object());
+        }
+    }
+
+    #[test]
+    fn test_get_tools_contains_layer_tools() {
+        let tools = get_tools();
+
+        let layer_create = tools.iter().find(|t| t.name == "layer_create");
+        assert!(layer_create.is_some(), "layer_create tool should be registered");
+
+        if let Some(tool) = layer_create {
+            let schema = &tool.input_schema;
+            assert!(schema["required"].is_array());
+            let required = schema["required"].as_array().unwrap();
+            assert!(required.contains(&serde_json::Value::String("name".to_string())));
+        }
+    }
+
+    #[test]
+    fn test_get_tools_all_have_names() {
+        let tools = get_tools();
+        for tool in tools {
+            assert!(!tool.name.is_empty(), "All tools must have a name");
+            assert!(tool.input_schema.is_object(), "Tool {} schema must be an object", tool.name);
+        }
+    }
+}
