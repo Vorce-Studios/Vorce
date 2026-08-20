@@ -128,8 +128,8 @@ fn push_unique_ancestors_with_child(candidates: &mut Vec<PathBuf>, start: &Path,
 mod tests {
     use super::*;
     use std::fs;
-    use tempfile::TempDir;
     use std::sync::Mutex;
+    use tempfile::TempDir;
     static ENV_MUTEX: Mutex<()> = Mutex::new(());
 
     #[test]
