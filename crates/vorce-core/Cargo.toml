@@ -1,4 +1,4 @@
-﻿[package]
+[package]
 name = "vorce-core"
 version.workspace = true
 edition.workspace = true
@@ -49,6 +49,7 @@ winit = { workspace = true, optional = true }
 [dev-dependencies]
 proptest = { workspace = true }
 ron = { workspace = true }
+serial_test = "4.0.1"
 tempfile = "3.27"
 
 vorce-control = { path = "../vorce-control" }

@@ -128,6 +128,132 @@ fn push_unique_ancestors_with_child(candidates: &mut Vec<PathBuf>, start: &Path,
 mod tests {
     use super::*;
 
+    use serial_test::serial;
+    use std::fs;
+    use tempfile::tempdir;
+
+    // A helper to temporarily set an environment variable.
+    struct EnvVarGuard {
+        key: &'static str,
+        original_value: Option<std::ffi::OsString>,
+    }
+
+    impl EnvVarGuard {
+        fn new(key: &'static str, value: &Path) -> Self {
+            let original_value = env::var_os(key);
+            env::set_var(key, value);
+            Self { key, original_value }
+        }
+
+        fn clear(key: &'static str) -> Self {
+            let original_value = env::var_os(key);
+            env::remove_var(key);
+            Self { key, original_value }
+        }
+    }
+
+    impl Drop for EnvVarGuard {
+        fn drop(&mut self) {
+            match &self.original_value {
+                Some(val) => env::set_var(self.key, val),
+                None => env::remove_var(self.key),
+            }
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_assets_dir_env_var() {
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path().join("my_assets");
+        fs::create_dir_all(&path).unwrap();
+
+        let _guard = EnvVarGuard::new(ASSETS_ENV, &path);
+        assert_eq!(assets_dir(), path);
+    }
+
+    #[test]
+    #[serial]
+    fn test_assets_dir_legacy_env_var() {
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path().join("my_legacy_assets");
+        fs::create_dir_all(&path).unwrap();
+
+        let _guard_clear = EnvVarGuard::clear(ASSETS_ENV);
+        let _guard = EnvVarGuard::new(LEGACY_ASSETS_ENV, &path);
+        assert_eq!(assets_dir(), path);
+    }
+
+    #[test]
+    #[serial]
+    fn test_resources_dir_env_var() {
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path().join("my_resources");
+        fs::create_dir_all(&path).unwrap();
+
+        let _guard = EnvVarGuard::new(RESOURCES_ENV, &path);
+        assert_eq!(resources_dir(), path);
+    }
+
+    #[test]
+    #[serial]
+    fn test_asset_path() {
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path().join("my_assets");
+        fs::create_dir_all(&path).unwrap();
+
+        let _guard = EnvVarGuard::new(ASSETS_ENV, &path);
+        assert_eq!(asset_path("test.png"), path.join("test.png"));
+    }
+
+    #[test]
+    #[serial]
+    fn test_resource_path() {
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path().join("my_resources");
+        fs::create_dir_all(&path).unwrap();
+
+        let _guard = EnvVarGuard::new(RESOURCES_ENV, &path);
+        assert_eq!(resource_path("config.json"), path.join("config.json"));
+    }
+
+    #[test]
+    #[serial]
+    fn test_existing_asset_path_found() {
+        let temp_dir = tempdir().unwrap();
+        let base_path = temp_dir.path().join("my_assets");
+        fs::create_dir_all(&base_path).unwrap();
+        let file_path = base_path.join("exists.png");
+        fs::write(&file_path, "test").unwrap();
+
+        let _guard = EnvVarGuard::new(ASSETS_ENV, &base_path);
+        assert_eq!(existing_asset_path("exists.png"), Some(file_path));
+    }
+
+    #[test]
+    #[serial]
+    fn test_existing_asset_path_not_found() {
+        let temp_dir = tempdir().unwrap();
+        let base_path = temp_dir.path().join("my_assets");
+        fs::create_dir_all(&base_path).unwrap();
+
+        let _guard = EnvVarGuard::new(ASSETS_ENV, &base_path);
+        assert_eq!(existing_asset_path("missing.png"), None);
+    }
+
+    #[test]
+    #[serial]
+    fn test_existing_resource_path_found() {
+        let temp_dir = tempdir().unwrap();
+        let base_path = temp_dir.path().join("my_resources");
+        fs::create_dir_all(&base_path).unwrap();
+        let file_path = base_path.join("exists.json");
+        fs::write(&file_path, "test").unwrap();
+
+        let _guard = EnvVarGuard::new(RESOURCES_ENV, &base_path);
+        assert_eq!(existing_resource_path("exists.json"), Some(file_path));
+    }
+
     #[test]
     fn detects_macos_bundle_resources_dir() {
         let exe_dir = Path::new("/Applications/Vorce.app/Contents/MacOS");
