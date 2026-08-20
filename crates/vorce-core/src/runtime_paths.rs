@@ -140,4 +140,39 @@ mod tests {
         let exe_dir = Path::new("/tmp/vorce/target/release");
         assert_eq!(bundle_resources_dir_from_exe_dir(exe_dir), None);
     }
+
+    #[test]
+    fn test_existing_asset_path_found_in_env() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let assets_dir = temp_dir.path().join("assets");
+        std::fs::create_dir(&assets_dir).unwrap();
+
+        let file_path = assets_dir.join("test_file.txt");
+        std::fs::write(&file_path, "test content").unwrap();
+
+        // Set environment variable
+        std::env::set_var("VORCE_ASSETS_DIR", &assets_dir);
+
+        let result = existing_asset_path("test_file.txt");
+        assert_eq!(result, Some(file_path));
+
+        // Clean up environment variable
+        std::env::remove_var("VORCE_ASSETS_DIR");
+    }
+
+    #[test]
+    fn test_existing_asset_path_not_found() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let assets_dir = temp_dir.path().join("assets");
+        std::fs::create_dir(&assets_dir).unwrap();
+
+        // Set environment variable
+        std::env::set_var("VORCE_ASSETS_DIR", &assets_dir);
+
+        let result = existing_asset_path("non_existent_file.txt");
+        assert_eq!(result, None);
+
+        // Clean up environment variable
+        std::env::remove_var("VORCE_ASSETS_DIR");
+    }
 }
