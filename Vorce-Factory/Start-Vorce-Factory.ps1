@@ -257,7 +257,7 @@ if ($Restart.IsPresent) {
 # 1. Dashboard Health Check / Start
 if (-not $NoDashboard.IsPresent) {
     Write-Host "[BOOT] Pruefe Dashboard (Port 5173)..." -ForegroundColor Gray
-    
+
     $isHealthy = Test-DashboardHealth
 
     if ($isHealthy) {

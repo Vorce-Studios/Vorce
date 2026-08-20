@@ -1,4 +1,4 @@
-﻿[package]
+[package]
 name = "vorce-core"
 version.workspace = true
 edition.workspace = true
