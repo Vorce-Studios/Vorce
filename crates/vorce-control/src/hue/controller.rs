@@ -103,9 +103,12 @@ impl HueController {
             api::groups::get_entertainment_groups(&self.config).await.map_err(|e| e.to_string())?;
 
         // Find selected group
-        let group = groups.into_iter().find(|g| g.id == self.config.entertainment_group_id).ok_or_else(
-            || format!("Entertainment group '{}' not found", self.config.entertainment_group_id),
-        )?;
+        let group = groups
+            .into_iter()
+            .find(|g| g.id == self.config.entertainment_group_id)
+            .ok_or_else(|| {
+                format!("Entertainment group '{}' not found", self.config.entertainment_group_id)
+            })?;
 
         // Populate nodes map
         self.nodes.clear();
