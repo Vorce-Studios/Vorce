@@ -183,7 +183,36 @@ mod tests {
     #[test]
     fn test_test_topology() {
         let topology = create_test_topology();
+
+        // Basic assertions
         assert_eq!(topology.monitor_count(), 2);
-        assert!(topology.primary_monitor().is_some());
+
+        // Verify total bounds calculation for the 2 monitors
+        // Monitor 1: (0, 0) to (1920, 1080)
+        // Monitor 2: (1920, 0) to (3840, 1080)
+        assert_eq!(topology.total_bounds, (0, 0, 3840, 1080));
+
+        // Verify primary monitor (Monitor 1)
+        let primary = topology.primary_monitor().expect("Should have a primary monitor");
+        assert_eq!(primary.name, "Monitor 1");
+        assert_eq!(primary.index, 0);
+        assert_eq!(primary.position, (0, 0));
+        assert_eq!(primary.size, (1920, 1080));
+        assert_eq!(primary.refresh_rate, Some(60));
+        assert_eq!(primary.scale_factor, 1.0);
+        assert!(primary.is_primary);
+
+        // Verify secondary monitor (Monitor 2)
+        let secondary = topology.get_monitor(1).expect("Should have a second monitor");
+        assert_eq!(secondary.name, "Monitor 2");
+        assert_eq!(secondary.index, 1);
+        assert_eq!(secondary.position, (1920, 0));
+        assert_eq!(secondary.size, (1920, 1080));
+        assert_eq!(secondary.refresh_rate, Some(60));
+        assert_eq!(secondary.scale_factor, 1.0);
+        assert!(!secondary.is_primary);
+
+        // Verify out of bounds access
+        assert!(topology.get_monitor(2).is_none());
     }
 }
