@@ -14,7 +14,7 @@ This plan provides the **highly granular, unambiguous step-by-step instructions*
 **File to Create**: `Vorce-Factory/src/lib/integrations/A2AClient.ps1`
 **Tasks**:
 1. Create function `Send-VorceA2AMessage -TargetAgent <String> -MessageType <String> -Payload <Hashtable> -CorrelationId <String>`.
-2. Wrap the payload in a JSON-RPC 2.0 schema: 
+2. Wrap the payload in a JSON-RPC 2.0 schema:
    `@{ jsonrpc = "2.0"; method = "sendMessage"; params = @{ target = $TargetAgent; type = $MessageType; payload = $Payload; correlationId = $CorrelationId }; id = [guid]::NewGuid().ToString() }`
 3. Use `Invoke-RestMethod -Uri "http://localhost:5174/api/a2a" -Method Post -Body ($Body | ConvertTo-Json -Depth 10) -ContentType "application/json"`.
 4. Wrap the HTTP call in a `try/catch` to suppress errors silently if the Dashboard/A2A Hub is offline (non-blocking).
@@ -49,7 +49,7 @@ This plan provides the **highly granular, unambiguous step-by-step instructions*
 ### NA-04: State-Schema, History, and Persistence
 - **Files**: `StateManager.ps1`, `RunEngine.ps1`, `Vorce-Orchestrator.ps1`
 - **Tasks**:
-  1. Ensure `Save-VorceRunState` uses Schema 2. 
+  1. Ensure `Save-VorceRunState` uses Schema 2.
   2. Set IDs: MAIN `main_run_id` = own ID; SUB `parent_run_id` = MAIN-ID; PART `parent_run_id` = SUB-ID.
   3. Ensure `Save-VorceRunState` explicitly retains these fields: `resume`, `execution_graph`, `attempts`, `result_ref`, `result_id`, `reusable`, `error`, `error_class`, `retry_after`, `parts`.
   4. Write the latest state to `var/run-states` and the immutable history to `var/run-history/<TYPE>/<RunName>/<RunId>.json`.
@@ -184,7 +184,7 @@ This plan provides the **highly granular, unambiguous step-by-step instructions*
   - `[1]` ensures `MAIN-RUN-01_Planning` runs exactly once as initial planning.
 
 ### NA-23: End-to-End Testing
-- **Tasks**: 
+- **Tasks**:
   - Ensure every `Test-*.ps1` correctly uses exit code 1 on failure.
   - Run all tests before considering implementation complete.
 
