@@ -556,7 +556,10 @@ mod tests {
 
         if let Some(tool) = send_osc {
             assert!(tool.description.is_some());
-            assert_eq!(tool.description.as_ref().unwrap(), "Send an Open Sound Control (OSC) message to Vorce");
+            assert_eq!(
+                tool.description.as_ref().unwrap(),
+                "Send an Open Sound Control (OSC) message to Vorce"
+            );
 
             let schema = &tool.input_schema;
             assert_eq!(schema["type"], "object");
