@@ -127,6 +127,10 @@ fn push_unique_ancestors_with_child(candidates: &mut Vec<PathBuf>, start: &Path,
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use std::sync::Mutex;
+    use tempfile::TempDir;
+    static ENV_MUTEX: Mutex<()> = Mutex::new(());
 
     #[test]
     fn detects_macos_bundle_resources_dir() {
@@ -139,5 +143,32 @@ mod tests {
     fn ignores_non_bundle_paths() {
         let exe_dir = Path::new("/tmp/vorce/target/release");
         assert_eq!(bundle_resources_dir_from_exe_dir(exe_dir), None);
+    }
+
+    #[test]
+    fn existing_resource_path_works() {
+        // Prevent concurrent tests from stepping on each other's ENV changes
+        let _lock = ENV_MUTEX.lock().unwrap();
+
+        let temp = TempDir::new().unwrap();
+        let resource_dir = temp.path().join("resources");
+        fs::create_dir_all(&resource_dir).unwrap();
+
+        let test_file = resource_dir.join("test_file.txt");
+        fs::write(&test_file, "content").unwrap();
+
+        // Temporarily set VORCE_RESOURCES_DIR to our test directory
+        env::set_var(RESOURCES_ENV, &resource_dir);
+
+        // existing file should be found
+        let found = existing_resource_path("test_file.txt");
+        assert_eq!(found, Some(test_file));
+
+        // missing file should return None
+        let missing = existing_resource_path("missing_file.txt");
+        assert_eq!(missing, None);
+
+        // Restore environment by unsetting test var
+        env::remove_var(RESOURCES_ENV);
     }
 }
