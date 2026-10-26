@@ -12,4 +12,3 @@ Scope:
 - Keinen neuen PR erstellen.
 - Keine unrelated Aenderungen anfassen.
 - Den bestehenden PR-Branch aktualisieren und danach die Checks erneut laufen lassen.
-

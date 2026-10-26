@@ -17,4 +17,3 @@ Antworte ausschliesslich mit einer JSON-Liste mit maximal {{MaxIssues}} Eintraeg
 [{"title":"...", "body":"...", "labels":["jules-task"]}]
 
 Wenn nichts sinnvoll delegierbar ist, antworte exakt mit [].
-

@@ -22,4 +22,3 @@ Antworte im JSON-Format:
   "risks": ["<Risiko 1>", "<Risiko 2>"],
   "confidence": "<high|medium|low>"
 }
-

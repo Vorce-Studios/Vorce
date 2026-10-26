@@ -32,4 +32,3 @@ Disposition: DONE
 
 Danach genau eine Zeile:
 Reason: <kurze Begruendung>
-

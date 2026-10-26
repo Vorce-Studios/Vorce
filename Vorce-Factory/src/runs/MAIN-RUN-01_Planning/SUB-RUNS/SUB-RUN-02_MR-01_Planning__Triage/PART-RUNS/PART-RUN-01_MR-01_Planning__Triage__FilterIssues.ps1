@@ -24,7 +24,7 @@ $triaged = Get-VorceTriagedIssues -Issues $issues -Config $ConfigBag.Config
 $triagedPath = Join-Path $VarDir "db/triaged-issues.json"
 $triaged | ConvertTo-Json -Depth 10 | Set-Content $triagedPath -Encoding UTF8
 
-return @{ 
-    triaged_count = $triaged.Count 
-    timestamp = (Get-Date).ToString("o") 
+return @{
+    triaged_count = $triaged.Count
+    timestamp = (Get-Date).ToString("o")
 }
