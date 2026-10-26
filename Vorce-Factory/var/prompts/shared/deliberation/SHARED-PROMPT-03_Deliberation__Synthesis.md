@@ -24,4 +24,3 @@ ANWEISUNGEN:
 Antworte im selben Format wie die Original-Aufgabe es verlangt.
 Falls die Original-Aufgabe JSON verlangt, antworte in diesem JSON-Format.
 Falls nicht, antworte in klarem, strukturiertem Text.
-

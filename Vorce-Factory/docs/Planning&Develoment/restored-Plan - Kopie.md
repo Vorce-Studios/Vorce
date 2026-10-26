@@ -1,23 +1,23 @@
 @@ -1,3261 +1,101 @@
 -# Agent-Prompts fuer Run-Hierarchie, Audit, Rename und Logik-Validierung
 +# AGENT_PROMPTS_RUN_DASHBOARD_AUDIT_RENAME.md
- 
+
 -Stand: 2026-06-21
 +## Planung und Entwicklung: Dashboard Audit Rename
- 
+
 -Arbeitskontext fuer alle Agents:
 +### 1. Ueberblick
- 
+
 -- Repo-Root: `C:\Users\Vinyl\Desktop\VJMapper\VJMapper`
 -- Hauptsystem: `Vorce-Factory/`
 -- Dashboard: `Vorce-Factory/web/Dashboard/`
 -- Wichtige Doku: `Vorce-Factory/docs/Documentations/DOCUMENTATION.md`, `Vorce-Factory/docs/Documentations/Agent-Doku.md`, `Vorce-Factory/docs/Documentations/README.md`
 -- Wichtig: Das Worktree kann bereits User-/Runtime-Aenderungen enthalten. Keine fremden Aenderungen revertieren. Keine `node_modules/`-Aenderungen anfassen. `dist/` nur aktualisieren, wenn ein Build bewusst Teil des Auftrags ist.
 +Dieses Dokument beschreibt die notwendigen Schritte zur Umbenennung von Dashboard-bezogenen Funktionen und zur Anpassung des Startskripts und des State-Managements. Ziel ist es, die Namenskonventionen zu vereinheitlichen und eine klarere Trennung der Verantwortlichkeiten zu schaffen.
- 
+
 -Soll-Run-Struktur laut Doku und aktueller Ordnerstruktur:
 +### 2. Hintergrund
- 
+
 -```text
 -MAIN-RUN-01_Planning
 -  SUB-RUN-01_MR-01_Planning__DataSync
@@ -2646,7 +2646,7 @@
 -- stdout und stderr nicht zu einem scheinbar erfolgreichen fachlichen Output vermischen.
 -- Erfolg basiert auf ExitCode und validiertem stdout.
 +Im Zuge der Weiterentwicklung des VORCE Factory Systems werden Dashboard- und Audit-Funktionen umbenannt, um ihre Rolle als "Startpunkte" fuer bestimmte Aktionen besser widerzuspiegeln. Zudem wird das Startskript modularisiert, um nur die Basiskomponenten des Dashboards zu initialisieren.
- 
+
 -NA-09.6 - Chain
 -- Reihenfolge gemaess Prompt 6A.
 -- Duplikate entfernen.
@@ -2654,7 +2654,7 @@
 -- Nach Chain-Ende `status=waiting_provider`, `retry_after`, `resume_required=true`.
 -- Keine blockierende 15-Minuten-Wartezeit.
 +### 3. Betroffene Module/Dateien
- 
+
 -NA-09.7 - Tests
 -- FakeCLI success, exit 1, timeout, empty, invalid JSON.
 -- Chain missing -> timeout -> success.
@@ -2665,7 +2665,7 @@
 +- `src/lib/http/Http-Server.ps1` (HTTP-Server-Funktionalitaet)
 +- `src/lib/state/State-Manager.ps1` (State-Management-Funktionen)
 +- Frontend-Komponenten (DashboardPage, SettingsPage, MemoryPanel, etc.)
- 
+
 -Akzeptanzkriterien:
 -- Jeder Registry-Provider wird ausgefuehrt oder exakt begruendet geskippt.
 -- Prompttransport funktioniert nachweislich.
@@ -3001,7 +3001,7 @@
 -
 ----
 +### 4. Detailplanung
- 
+
 -### NA-16 - Dashboard Typecheck, Lint und Hierarchie-UX abschliessen
 -
 -Status: `[OFFEN]`
@@ -3206,7 +3206,7 @@
 +- Bei Quota-Fehler: `waiting_for_provider` mit `retry_after` und `blocked_part_run`.
 +- Global State wird nach jedem Quota-Ereignis gespeichert.
 +- Tests fuer Block, Release, Cache-Hit, Cache-Miss und `waiting_for_provider`.
- 
+
  Checkliste:
 +- [ ] Get-QuotaRemaining, Block-QuotaUsage, Release-QuotaUsage.
 +- [ ] Quota-Registry aus Config.
@@ -3215,7 +3215,7 @@
 +- [ ] waiting_for_provider-Status.
 +- [ ] Global State Speicherung.
 +- [ ] Quota-Tests bestehen.
- 
+
 -- [ ] Optimizer 5 SUB / 12 PART.
 -- [ ] Metrics-Snapshot.
 -- [ ] Findings und Proposals getrennt.
@@ -3253,7 +3253,7 @@
  - Implementiere `Select-VorceRelevantMemories`.
  - Defaults 3 Memories / 500 Tokens.
  - Default ist keine Memory.
- 
+
 -NA-20.3 - MemoryMaintenance
 +Checkliste:
 +- [ ] MemoryManager und Auswahlfunktion.
@@ -3265,7 +3265,7 @@
  - ApplyApprovedMaintenance.
  - Backup und before/after Hash.
  - Permanent/User-Memory niemals automatisch loeschen.
- 
+
 -NA-20.4 - MasterIssueContext
 +Checkliste:
 +- [ ] Plan/Apply getrennt.
@@ -3276,7 +3276,7 @@
  - SyncIssueRelationships lokal.
  - UpdateChangedMasterIssueSummaries nur bei Hashaenderung.
  - Maximal ein bedingter LLM-Call pro geaendertem Master-Issue.
- 
+
 -NA-20.5 - Reporting
 +Checkliste:
 +- [ ] Master-Issue-Delta-Logik.
@@ -3284,7 +3284,7 @@
 +
 +#### NA-20.5 - Reporting
  - BuildMemoryUsageStatistics lokal.
- 
+
 -NA-20.6 - Router, Reuse und Tests
 +Checkliste:
 +- [ ] Reporting.
@@ -3293,7 +3293,7 @@
  - Conditions aus Punkt 9.
  - Jeder PART eigener Fingerprint.
  - Tests fuer Auswahlreihenfolge, Tokenbudget, keine Memory, TTL, Duplicate, Plan/Apply und unveraenderten Master-Kontext.
- 
+
 -NA-20.7 - Finale Topologie
 +Checkliste:
 +- [ ] Conditions implementiert.
@@ -3303,23 +3303,23 @@
 +#### NA-20.7 - Finale Topologie
  - Nach NA-19 und NA-20 das Manifest aus NA-03 auf exakt 5 MAIN / 24 SUB / 36 PART aktualisieren.
  - Alte 5/17/18-Abnahme gilt danach nicht mehr.
- 
+
  Akzeptanzkriterien:
  - MAIN-RUN-05 besitzt exakt 5 SUB- und 9 PART-RUNs.
  - Standardmaessig nur ein bedingter LLM-Part.
  - Auswahl und Maintenance sind deterministisch und budgetiert.
  - Gesamttopologie ist exakt 5/24/36.
 -```
- 
+
  Checkliste:
- 
+
  - [ ] MemoryOptimization 5 SUB / 9 PART.
  - [ ] MemoryManager und Auswahlfunktion.
 @@ -3319,314 +159,58 @@ Checkliste:
  ### NA-22 - Startskript nur fuer Dashboard-Basis und manuelles Systemmenue
- 
+
  Status: `[OFFEN]`
- 
+
  ```text
 -Du bist Bootstrap- und Bedienungs-Agent fuer Vorce-Factory. Erweitere das Startskript um ein einfaches Konsolenmenue. Eine Windows-Tray-Anwendung oder GUI ist fuer diesen Auftrag nicht erforderlich. Das Konsolenmenue ist die bevorzugte Loesung, weil es ohne neue Abhaengigkeiten unter Windows PowerShell und PowerShell 7 funktioniert.
 -
@@ -3399,7 +3399,7 @@
 -- Nach Health-Erfolg Dashboard-URL, PID, Port und Logpfade anzeigen.
 -- Bei Dashboard-Startfehler keinen Run-Start anbieten.
 +Du bist Frontend-Agent und uebernimmst das Startskript fuer das Dashboard.
- 
+
 -NA-22.3 - Menue implementieren
 -- Nutze `Read-Host` oder `[Console]::ReadKey`, ohne externe Module.
 -- Akzeptiere `1`, `2`, `S/s`, `Q/q`.
@@ -3518,9 +3518,9 @@
 +- Es gibt einen "Settings" und einen "Audit"-Eintrag.
 +- Das Audit ist rein passiv (nur Anzeige).
  ```
- 
+
  Checkliste:
- 
+
 -- [ ] Standardstart startet nur Dashboard-Basis.
 -- [ ] Kein automatisches Stop-All beim Standardstart.
 -- [ ] Konsolenmenue mit `1`, `2`, `S`, `Q`.
@@ -3537,14 +3537,14 @@
 +- [ ] Systemmenue mit "Settings" und "Audit".
 +- [ ] Systemmenue nicht bedienbar.
 +- [ ] Audit passiv.
- 
+
  ---
- 
+
 -### NA-23 - Vollstaendige End-to-End-Abnahme aller Planpunkte
 +### NA-23 - Statuswechsel bei fehlendem Quota (API-Ebene)
- 
+
  Status: `[OFFEN]`
- 
+
  ```text
 -Du bist der abschliessende Abnahme-Agent. Aendere keine Fachlogik, bevor ein reproduzierbarer Fehler nachgewiesen ist. Deine Aufgabe ist, alle Punkte 1 bis 9 gegen den aktuellen Code und die Nacharbeitsauftraege abzunehmen.
 -
@@ -3589,7 +3589,7 @@
 -- automatisierter Endpoint-Test fuer `/run-summary.json`
 -- `Test-StartMenu.ps1`
 +Du bist Backend-Agent und pruefst die Statuswechsel auf API-Ebene.
- 
+
 -Abschlussbericht:
 -- Tabelle pro Punkt/Prompt mit `ERLEDIGT|TEILWEISE|OFFEN`.
 -- Fuer ERLEDIGT konkrete Testdatei und Ergebnis nennen.
@@ -3605,9 +3605,9 @@
 +- API: Optional: Es wird ein `retry_after` Timestamp gesetzt (z.B. +15 Minuten).
 +- API: Optional: Der `blocked_part_run` wird im Status vermerkt.
  ```
- 
+
  Checkliste:
- 
+
 -- [ ] Alle PowerShell-Tests erfolgreich.
 -- [ ] Typecheck erfolgreich.
 -- [ ] Lint erfolgreich.
@@ -3625,10 +3625,10 @@
 +- [ ] Optional: `blocked_part_run` im Status.
 +
 +---
- 
+
 -### Nacharbeits-Gesamtstatus
 +## Task-Status-Uebersicht
- 
+
 -| Auftrag | Status | Abhaengigkeit |
 -|---|---|---|
 -| NA-01 Syntax-/Runtime-Blocker | `[ERLEDIGT]` | keine |
@@ -3664,4 +3664,3 @@
 +- [ ] NA-21 - Optimizer-, Memory- und Run-Dashboard
 +- [ ] NA-22 - Startskript nur fuer Dashboard-Basis und manuelles Systemmenue
 +- [ ] NA-23 - Statuswechsel bei fehlendem Quota (API-Ebene)
-

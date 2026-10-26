@@ -6,18 +6,18 @@ function Get-VorceTriagedIssues {
         [Parameter(Mandatory)][object]$Issues,
         [Parameter(Mandatory)][Alias("FilterRules")][object]$Config
     )
-    
+
     Write-VorceStep -Message "Starte Triage für $($Issues.Count) Issues..." -Status "RUN"
-    
+
     $rules = if ($Config.PSObject.Properties.Name -contains "issue_filters") { $Config.issue_filters } else { $Config }
     $includeLabels = @($rules.include_labels)
     $excludeLabels = @($rules.exclude_labels)
-    
+
     $triaged = @()
-    
+
     foreach ($issue in $Issues) {
         $labelNames = @($issue.labels.name)
-        
+
         # 1. Ausschluss-Filter
         $isExcluded = $false
         foreach ($ex in $excludeLabels) {
@@ -27,7 +27,7 @@ function Get-VorceTriagedIssues {
             }
         }
         if ($isExcluded) { continue }
-        
+
         # 2. Einschluss-Filter
         $isIncluded = $false
         foreach ($inc in $includeLabels) {
@@ -36,12 +36,12 @@ function Get-VorceTriagedIssues {
                 break
             }
         }
-        
+
         if ($isIncluded) {
             $triaged += $issue
         }
     }
-    
+
     Write-VorceStep -Message "$($triaged.Count) Issues nach Filterung verbleibend." -Status "OK"
     return $triaged
 }

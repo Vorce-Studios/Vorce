@@ -19,4 +19,3 @@ $partRuns = @(
 )
 
 return Invoke-VorceSubRunSequential -SubRunName "SUB-RUN-01_MR-02_CheckAndDoing__SessionSync" -PartRuns $partRuns -ConfigBag $ConfigBag -ParentState $ParentState
-

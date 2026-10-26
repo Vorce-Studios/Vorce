@@ -65,9 +65,9 @@ Router	param([hashtable]$ConfigBag, [object]$MainState)
 Sub‑Run	param([hashtable]$ConfigBag, [object]$ParentState)
 Part‑Run	param([hashtable]$ConfigBag, [string]$PartName) (implizit durch RunEngine)
 Rückgabe:  
-- 
+-
 Router → Array von Hashtables {id; name; script}  
-- 
+-
 Sub‑Run → PSCustomObject mit .status & .results
 5. Scheduling‑Logik (in Vorce‑Orchestrator.ps1)  
 function Select-NextMainRun {
@@ -91,41 +91,41 @@ function Select-NextMainRun {
 }
 Nur überfällige Main‑Runs werden ausgeführt.  
 6. Orchestrator‑Workflow (Kurz)  
-1. 
+1.
 Module laden über $global:LibDir.  
-2. 
+2.
 Config & Quota aus $global:VarDir/config/.  
-3. 
+3.
 GlobalState aus var/db/global-state.json.  
-4. 
+4.
 ConfigBag bauen.  
-5. 
+5.
 Select‑NextMainRun → $mainRunName.  
-6. 
+6.
 Router des Main‑Runs ausführen → Sub‑Run‑Definitionen.  
-7. 
+7.
 Für jede Sub‑Run  
-- 
+-
 Try / Catch → Fehler werden geloggt, aber Orchestrator fährt fort.  
-- 
+-
 Sub‑Run aufrufen mit -ConfigBag und $MainState.
-8. 
+8.
 Main‑State‑Ergebnisse in var/run-states/ persistieren.  
-9. 
+9.
 GlobalState.last_runs aktualisieren, speichern.
 7. Fehler‑ und Retry‑Strategie  
-- 
+-
 Part‑Run – RunEngine fängt Exceptions, markiert Part als failed aber fährt parallel fort.
-- 
+-
 Sub‑Run – Try / Catch im Orchestrator, fügt Fehlermeldung zum Main‑State hinzu.
-- 
+-
 Main‑Run – Orchestrator‑Fehler führen zu ERROR‑Logeintrag, Autopilot‑Loop wartet das konfigurierte Intervall und startet neu.
 8. Quota‑Management (QuotaManager.ps1)  
-- 
+-
 Test‑VorceQuota prüft: Provider‑Aktiv, nicht erschöpft, unter daily‑limit & daily‑budget, CLI‑Verfügbarkeit.  
-- 
+-
 Bei Fehler Write‑VorceStep … -Status "WARN" und Rückgabe $false.  
-- 
+-
 Register‑VorceQuotaUsage erhöht calls & estimated_cost_usd, schreibt last_synced_at.
 9. Agent‑Aufruf (AgentRunner.ps1)  
 if(-not (Test-VorceQuota -AgentName $AgentName -ModelTier $ModelTier)){
@@ -136,9 +136,9 @@ Register-VorceQuotaUsage -AgentName $AgentName -ModelTier $ModelTier
 # Start‑Process mit CLI‑Befehl, sammle STDOUT/STDERR nach var/tmp/
 Fallback‑Chain (gemini → claude → codex → kiro → copilot → cursor‑agent → hermes) wird in AgentRunner implementiert.  
 10. Dashboard‑Sync (WebSocket)  
-- 
+-
 src/tools/services/sync-service.ps1 lauscht auf Port 5174.  
-- 
+-
 Bei jedem Save‑VorceGlobalState wird ein JSON‑Patch an verbundene Dashboard‑Clients gesendet.
 11. Tests (unter test/)  
 Test	Zweck
@@ -147,7 +147,7 @@ Test‑OrchestratorDryRun.ps1	Dry‑Run‑Modus, ConfigBag‑Keys, Main‑Run‑
 Test‑PlanningRun.ps1	End‑to‑End‑Durchlauf des Planning‑Flows, Existenz von Sub‑ & Part‑Runs
 Test‑StartProcess.ps1	Grundlegende Startup‑Checks (autopilot, health‑check)
 12. Dokumentations‑Workflow  
-- 
+-
 Die Entwickler-Doku (dieses Dokument) liegt unter `docs/Documentations/Agent-Doku.md`.  
-- 
+-
 Die Benutzer-Doku liegt unter `docs/Documentations/README.md`.

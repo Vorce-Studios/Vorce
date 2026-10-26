@@ -29,4 +29,3 @@ Beachte die Lock-Datei:
 {{SessionLockPath}}
 
 Beende dich nach dem Journal-Update. Warte nicht interaktiv.
-
