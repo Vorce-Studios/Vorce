@@ -19,4 +19,3 @@ $partRuns = @(
 )
 
 return Invoke-VorceSubRunSequential -SubRunName "SUB-RUN-01_MR-04_Optimizer__PerformanceDataCollection" -PartRuns $partRuns -ConfigBag $ConfigBag -ParentState $ParentState
-

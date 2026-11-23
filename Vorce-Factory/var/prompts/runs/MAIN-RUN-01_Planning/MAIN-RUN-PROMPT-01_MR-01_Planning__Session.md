@@ -35,4 +35,3 @@ Beachte die Lock-Datei:
 
 Du laeufst in einer sichtbaren interaktiven Planning-Session. Wenn der User eingreift oder schreibt, beruecksichtige diese Eingabe.
 Wenn die Planung abgeschlossen ist, aktualisiere zuerst das Journal und setze danach den vom Autopilot vorgegebenen Abschlussstatus.
-

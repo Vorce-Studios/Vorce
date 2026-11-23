@@ -8,17 +8,17 @@ function Invoke-VorceApiRequest {
         [object]$Body = $null,
         [hashtable]$Headers = @{}
     )
-    
+
     $params = @{
         Uri = $Uri
         Method = $Method
         ContentType = "application/json"
         ErrorAction = "Stop"
     }
-    
+
     if ($Body) { $params["Body"] = $Body | ConvertTo-Json -Depth 10 }
     if ($Headers) { $params["Headers"] = $Headers }
-    
+
     try {
         return Invoke-RestMethod @params
     } catch {

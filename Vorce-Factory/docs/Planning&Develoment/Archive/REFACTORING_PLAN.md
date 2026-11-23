@@ -197,7 +197,7 @@ Vorce-Autopilot_NEW/
   - Zeitstempel des letzten Runs prüfen
   - Anzahl neuer Issues prüfen
 - [ ] **L4:** `SUB-RUN-04_Delegation.ps1` implementieren:
-  - Liest `var/db/proposals/` 
+  - Liest `var/db/proposals/`
   - Erstellt Jules-Tasks (via `gh issue create` oder Jules-API)
   - Speichert Ergebnis in `var/db/task-journal.json`
 - [ ] **SUB-RUN-02_Triage.ps1** vollständig implementieren (aktuell Stub):

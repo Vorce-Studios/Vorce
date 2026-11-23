@@ -2,13 +2,13 @@ Benutzer-Doku (Kurz-Version)
 Vorce-Factory  
 Ein modularer KI‑Orchestrator für das Vorce‑Studios‑Repository.  
 Was macht das System?  
-- 
+-
 Automatisierte Planung – sammelt Issues, filtert, erstellt Proposals via Dual‑Agent‑Deliberation und delegiert an Jules.
-- 
+-
 Kontinuierliches Monitoring – prüft laufende Jules‑Sessions, PR‑Reviews und führt House‑Keeping‑Aufgaben aus.
-- 
+-
 Audit‑Runs – führt Compliance‑Checks und überblickt System‑Health.
-- 
+-
 Optimierung & Memory‑Management – analysiert Lauf‑Statistiken, räumt verwaiste Daten auf.
 Wesentliche Komponenten  
 Komponente	Aufgabe
@@ -20,19 +20,19 @@ var/	Laufzeit‑Daten (Config, DB‑JSONs, Logs, Prompts, Run‑States)
 web/Dashboard/	React/Vite‑Frontend, synchronisiert via WebSocket (sync-service.ps1)
 test/	Validierungsskripte (Boot, DryRun, Planning, Start)
 Arbeitsablauf (typisch)  
-1. 
+1.
 Start – .\Start-Autopilot.ps1 prüft var/‑Ordner, lädt Config & GlobalState, startet Guard‑Loop.  
-2. 
+2.
 Guard‑Loop – ruft Vorce‑Orchestrator.ps1 → Select‑NextMainRun.  
-3. 
+3.
 Router – liefert Liste von Sub‑Runs (z. B. DataSync, Triage…).  
-4. 
+4.
 Sub‑Run – definiert Part‑Runs, ruft RunEngine.ps1 zur parallelen Ausführung.  
-5. 
+5.
 Part‑Run – führt einzelne API‑Calls oder Agent‑Aufrufe aus.  
-6. 
+6.
 State‑Update – Ergebnisse werden in var/run-states/ und global-state.json geschrieben.  
-7. 
+7.
 Dashboard – WebSocket‑Server pusht Änderungen an das Frontend.
 Konfiguration  
 var/config/autopilot-config.json (Beispielauszug)  
@@ -67,10 +67,10 @@ Monitoring & Logs
 Logs → var/log/autopilot_YYYYMMDD_HHmmss.log (StatusPrinter‑Format).  
 Dashboard – öffne http://localhost:5173 (Vite‑Dev‑Server). Echtzeit‑Updates per WebSocket (Port 5174).  
 Fehlersuche  
-1. 
+1.
 Keine Logs? – Prüfe, ob var/log/ existiert; Start‑Autopilot.ps1 legt es an.  
-2. 
+2.
 GlobalState‑Fehler – global-state.json darf nicht leer oder "null" sein; Test‑Boot.ps1 überprüft das.  
-3. 
+3.
 Quota‑Fehler – AgentRunner.ps1 gibt WARN‑Meldungen; prüfe var/db/quota-registry.json.
 Hinweis: Alle Pfad‑ und Konfigurationsänderungen erfolgen ausschließlich über die oben beschriebenen globalen Variablen und das ConfigBag. Direktes Editieren von Skript‑Pfade‑Strings führt zu Instabilität und wird im Code vermieden.

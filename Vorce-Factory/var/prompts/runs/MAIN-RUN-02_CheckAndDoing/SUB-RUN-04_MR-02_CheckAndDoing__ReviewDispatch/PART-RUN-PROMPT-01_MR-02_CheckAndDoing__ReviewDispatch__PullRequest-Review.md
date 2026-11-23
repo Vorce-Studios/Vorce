@@ -15,4 +15,3 @@ oder
 Result: REJECT
 
 Danach eine kurze, direkt postbare Review-Begruendung.
-

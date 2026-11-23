@@ -29,4 +29,3 @@ Antworte im JSON-Format:
   "recommendation": "approve|modify|reject",
   "suggested_changes": "<konkrete Aenderungsvorschlaege falls modify/reject>"
 }
-

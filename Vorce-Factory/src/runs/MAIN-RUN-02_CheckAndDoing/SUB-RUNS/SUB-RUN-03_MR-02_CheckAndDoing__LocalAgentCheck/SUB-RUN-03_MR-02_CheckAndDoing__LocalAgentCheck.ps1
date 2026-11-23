@@ -19,4 +19,3 @@ $partRuns = @(
 )
 
 return Invoke-VorceSubRunSequential -SubRunName "SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck" -PartRuns $partRuns -ConfigBag $ConfigBag -ParentState $ParentState
-

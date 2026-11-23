@@ -19,4 +19,3 @@ $partRuns = @(
 )
 
 return Invoke-VorceSubRunSequential -SubRunName "SUB-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance" -PartRuns $partRuns -ConfigBag $ConfigBag -ParentState $ParentState
-
