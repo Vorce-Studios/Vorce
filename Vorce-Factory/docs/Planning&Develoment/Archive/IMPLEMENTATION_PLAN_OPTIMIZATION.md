@@ -11,7 +11,7 @@ Verbesserung der Terminal-Visualisierung der Run-Hierarchie (Main/Sub/Part) und 
 **Ziel:** Einführung einer klaren hierarchischen Struktur durch Einrückungen, Icons und Box-Elemente.
 
 **Text-Prompt für Agent:**
-> Überarbeite `src/lib/utils/StatusPrinter.ps1`. 
+> Überarbeite `src/lib/utils/StatusPrinter.ps1`.
 > 1. Erweitere `Write-VorceHeader` um einen optionalen Untertitel und eine breitere Box.
 > 2. Implementiere `Write-VorceRunStart` und `Write-VorceRunEnd` für Main-, Sub- und Part-Ebenen. Diese sollen unterschiedliche Einrückungstiefen (Indentation) und Icons verwenden.
 > 3. Optimiere `Write-VorceStep`: Füge eine Status-Spalte hinzu, die fest positioniert ist, damit Fortschritte (z.B. [ RUN ] -> [ OK ]) besser ins Auge springen.

@@ -2,7 +2,7 @@
 
 ## 2.2.0 (Dec 8, 2022)
 ### feat
-- Support keyboard navigation in pie chart (#2923) 
+- Support keyboard navigation in pie chart (#2923)
 - Allow reversing the tooltip direction (#3056)
 ### fix
 - fix rounding leading to hairline gaps (#3075)
@@ -1937,4 +1937,3 @@ module.exports = {
 
 ### UI
 - Refactor some components, include CartesianAxis, Legend, Tooltip etc, to unify some props name.
-

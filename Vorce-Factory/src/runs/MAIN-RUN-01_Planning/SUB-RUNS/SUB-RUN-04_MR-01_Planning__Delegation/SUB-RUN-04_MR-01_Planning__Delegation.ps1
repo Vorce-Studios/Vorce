@@ -19,4 +19,3 @@ $partRuns = @(
 )
 
 return Invoke-VorceSubRunSequential -SubRunName "SUB-RUN-04_MR-01_Planning__Delegation" -PartRuns $partRuns -ConfigBag $ConfigBag -ParentState $ParentState
-
